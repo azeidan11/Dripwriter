@@ -18,6 +18,13 @@ export default function Home() {
           <a className="hover:text-white" href="#faq">FAQ</a>
           <a className="rounded-full bg-white text-black px-4 py-2 font-medium hover:bg-white/90" href="#get-started">Sign in</a>
         </nav>
+        {/* Mobile Sign in button */}
+        <a
+          href="#get-started"
+          className="md:hidden rounded-full bg-white text-black px-4 py-2 font-medium hover:bg-white/90"
+        >
+          Sign in
+        </a>
       </header>
 
       {/* Hero */}
