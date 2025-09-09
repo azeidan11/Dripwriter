@@ -73,13 +73,13 @@ export default function Home() {
       <section className="mx-auto w-full max-w-5xl px-6 pt-10 pb-16 md:pt-20 md:pb-24">
         <div className="text-center">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-wide text-white/70">
-            New • Write as you go
+          AI-powered • Human-paced
           </span>
           <h1 className="mt-4 text-4xl font-extrabold leading-tight tracking-tight md:text-6xl">
             Dripwriter
           </h1>
           <p className="mx-auto mt-3 max-w-2xl text-white/80 md:text-lg">
-            Paste your draft. Pick a duration. We’ll drip it into your Google Doc on a schedule.
+            Paste your text. Pick a duration. We’ll drip it into your Google Doc on a schedule.
           </p>
 
           <div className="mt-6 flex items-center justify-center gap-3">
