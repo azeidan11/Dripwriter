@@ -5,7 +5,7 @@ export default function Home() {
       <div className="fixed inset-0 -z-10 bg-gradient-to-b from-[#e38db7] to-[#b35c8f]" />
 
       {/* Top nav (simple placeholder) */}
-      <header className="mx-auto w-full max-w-6xl px-6 py-5 flex items-center justify-between">
+      <header className="mx-auto w-full px-6 md:px-8 py-5 flex items-center justify-between">
         <a href="#" className="flex items-center gap-2">
           <div className="size-8 rounded-xl bg-white/10 backdrop-blur-sm grid place-items-center">
             <span className="text-sm font-semibold">DW</span>
@@ -70,7 +70,7 @@ export default function Home() {
       </header>
 
       {/* Hero */}
-      <section className="mx-auto w-full max-w-5xl px-6 pt-10 pb-16 md:pt-20 md:pb-24">
+      <section className="mx-auto w-full px-6 md:px-8 pt-10 pb-16 md:pt-20 md:pb-24">
         <div className="text-center">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-wide text-white/70">
           AI-powered • Human-paced
@@ -99,7 +99,7 @@ export default function Home() {
         </div>
 
         {/* Demo box for your GIF */}
-        <div id="demo" className="mx-auto mt-10 w-full max-w-4xl">
+        <div id="demo" className="mx-auto mt-10 w-full max-w-5xl">
           <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-2 md:p-3">
             <div className="aspect-[16/9] w-full overflow-hidden rounded-2xl bg-black/50 ring-1 ring-white/10">
               <img
@@ -113,7 +113,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="mx-auto w-full max-w-6xl px-6 pb-10 text-sm text-white/60">
+      <footer className="mx-auto w-full px-6 md:px-8 pb-10 text-sm text-white/60">
         <div className="border-t border-white/10 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <p>© {new Date().getFullYear()} Dripwriter. All rights reserved.</p>
           <div className="flex items-center gap-4">
