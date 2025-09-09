@@ -10,13 +10,13 @@ export default function Home() {
           <div className="size-8 rounded-xl bg-white/10 backdrop-blur-sm grid place-items-center">
             <span className="text-sm font-semibold">DW</span>
           </div>
-          <span className="text-base font-semibold tracking-tight">Dripwriter</span>
+          <span className="text-lg font-semibold tracking-tight">Dripwriter</span>
         </a>
         <nav className="hidden md:flex items-center gap-6 text-sm text-white/80">
-          <a className="hover:text-white" href="#features">Features</a>
-          <a className="hover:text-white" href="#pricing">Pricing</a>
-          <a className="hover:text-white" href="#faq">FAQ</a>
-          <a className="rounded-full bg-white text-black px-4 py-2 font-medium hover:bg-white/90" href="#get-started">Sign in</a>
+          <a className="hover:text-white text-base" href="#features">Features</a>
+          <a className="hover:text-white text-base" href="#pricing">Pricing</a>
+          <a className="hover:text-white text-base" href="#faq">FAQ</a>
+          <a className="rounded-full bg-white text-black px-4 py-2 font-medium hover:bg-white/90 text-base" href="#get-started">Sign in</a>
         </nav>
         {/* Mobile actions */}
         <div className="md:hidden flex items-center gap-2">
@@ -78,8 +78,8 @@ export default function Home() {
           <h1 className="mt-4 text-4xl font-extrabold leading-tight tracking-tight md:text-6xl">
             Dripwriter
           </h1>
-          <p className="mx-auto mt-3 max-w-2xl text-white/80 md:text-lg">
-            Paste your text. Pick a duration. We’ll drip it into your Google Doc on a schedule.
+          <p className="mx-auto mt-3 max-w-3xl text-white/80 md:text-lg">
+            Paste your text. Pick a duration. Watch it drip it into your Google Doc on your schedule.
           </p>
 
           <div className="mt-6 flex items-center justify-center gap-3">
