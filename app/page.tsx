@@ -70,7 +70,7 @@ export default function Home() {
       </header>
 
       {/* Hero */}
-      <section className="mx-auto w-full px-6 md:px-8 pt-10 pb-16 md:pt-20 md:pb-24">
+      <section className="mx-auto w-full px-6 md:px-8 pt-2 pb-16 md:pt-5 md:pb-24">
         <div className="text-center">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-wide text-white/70">
           AI-powered • Human-paced
