@@ -26,7 +26,7 @@ export default function Home() {
           >
             Sign in
           </a>
-          {/* Mobile hamburger (CSS-only) */}
+          {/* Mobile hamburger (full-screen glass overlay, left-aligned menu) */}
           <details className="relative">
             <summary
               className="list-none select-none cursor-pointer text-white text-2xl leading-none"
@@ -34,12 +34,19 @@ export default function Home() {
             >
               ☰
             </summary>
-            <div className="absolute right-0 mt-3 w-44 rounded-xl border border-white/15 bg-white/10 backdrop-blur-md p-3 shadow-lg">
-              <nav className="flex flex-col gap-2 text-sm text-white">
-                <a className="hover:text-white/80 px-2 py-1 rounded-md" href="#features">Features</a>
-                <a className="hover:text-white/80 px-2 py-1 rounded-md" href="#pricing">Pricing</a>
-                <a className="hover:text-white/80 px-2 py-1 rounded-md" href="#faq">FAQ</a>
-              </nav>
+            {/* Full-screen overlay panel */}
+            <div className="fixed inset-0 z-50 bg-white/10 backdrop-blur-xl">
+              <div className="h-full w-full flex">
+                {/* Left-side stacked nav */}
+                <nav className="w-3/4 max-w-xs bg-white/10 border-r border-white/15 p-6 text-white">
+                  <div className="text-xs uppercase tracking-wider text-white/70 mb-4">Menu</div>
+                  <a className="block text-lg font-semibold py-2 hover:text-white/80" href="#features">Features</a>
+                  <a className="block text-lg font-semibold py-2 hover:text-white/80" href="#pricing">Pricing</a>
+                  <a className="block text-lg font-semibold py-2 hover:text-white/80" href="#faq">FAQ</a>
+                </nav>
+                {/* Click-through area fills the rest; tap ☰ again to close */}
+                <div className="flex-1" />
+              </div>
             </div>
           </details>
         </div>
