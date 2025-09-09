@@ -27,12 +27,13 @@ export default function Home() {
             Sign in
           </a>
           {/* Mobile hamburger (full-screen glass overlay, left-aligned menu) */}
-          <details className="relative">
+          <details className="mobmenu relative">
             <summary
               className="list-none select-none cursor-pointer text-white text-2xl leading-none"
               aria-label="Toggle menu"
             >
-              ☰
+              <span className="open-icon block">☰</span>
+              <span className="close-icon hidden">×</span>
             </summary>
             {/* Full-screen overlay panel */}
             <div className="fixed inset-0 z-50 bg-white/10 backdrop-blur-xl">
@@ -44,10 +45,26 @@ export default function Home() {
                   <a className="block text-lg font-semibold py-2 hover:text-white/80" href="#pricing">Pricing</a>
                   <a className="block text-lg font-semibold py-2 hover:text-white/80" href="#faq">FAQ</a>
                 </nav>
-                {/* Click-through area fills the rest; tap ☰ again to close */}
+                {/* Click-through area fills the rest; tap ×/☰ to close */}
                 <div className="flex-1" />
               </div>
             </div>
+            <style>{`
+              details.mobmenu .close-icon { display: none; }
+              details.mobmenu[open] .open-icon { display: none; }
+              details.mobmenu[open] .close-icon { display: block; }
+              details.mobmenu[open] summary {
+                position: fixed;
+                top: 1rem;
+                right: 1rem;
+                z-index: 60;
+                background: rgba(255,255,255,0.08);
+                backdrop-filter: blur(12px);
+                border-radius: 9999px;
+                padding: 0.25rem 0.5rem;
+                line-height: 1;
+              }
+            `}</style>
           </details>
         </div>
       </header>
