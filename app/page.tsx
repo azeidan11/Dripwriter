@@ -172,57 +172,78 @@ export default function Home() {
                 {/* 2 hrs (locked) */}
                 <label className="group relative cursor-not-allowed opacity-60">
                   <input type="radio" name="duration" value="120" className="sr-only" disabled />
-                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm" title="Upgrade to unlock">
+                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
                     2 hrs
+                  </span>
+                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
+                    Upgrade to unlock
                   </span>
                 </label>
                 {/* 6 hrs (locked) */}
                 <label className="group relative cursor-not-allowed opacity-60">
                   <input type="radio" name="duration" value="360" className="sr-only" disabled />
-                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm" title="Upgrade to unlock">
+                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
                     6 hrs
+                  </span>
+                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
+                    Upgrade to unlock
                   </span>
                 </label>
                 {/* 12 hrs (locked) */}
                 <label className="group relative cursor-not-allowed opacity-60">
                   <input type="radio" name="duration" value="720" className="sr-only" disabled />
-                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm" title="Upgrade to unlock">
+                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
                     12 hrs
+                  </span>
+                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
+                    Upgrade to unlock
                   </span>
                 </label>
                 {/* 1 day (locked) */}
                 <label className="group relative cursor-not-allowed opacity-60">
                   <input type="radio" name="duration" value="1440" className="sr-only" disabled />
-                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm" title="Upgrade to unlock">
+                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
                     1 day
+                  </span>
+                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
+                    Upgrade to unlock
                   </span>
                 </label>
                 {/* 3 days (locked) */}
                 <label className="group relative cursor-not-allowed opacity-60">
                   <input type="radio" name="duration" value="4320" className="sr-only" disabled />
-                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm" title="Upgrade to unlock">
+                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
                     3 days
+                  </span>
+                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
+                    Upgrade to unlock
                   </span>
                 </label>
                 {/* 1 week (locked) */}
                 <label className="group relative cursor-not-allowed opacity-60">
                   <input type="radio" name="duration" value="10080" className="sr-only" disabled />
-                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm" title="Upgrade to unlock">
+                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
                     1 week
+                  </span>
+                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
+                    Upgrade to unlock
                   </span>
                 </label>
                 {/* More (locked) */}
                 <label className="group relative cursor-not-allowed opacity-60">
                   <input type="radio" name="duration" value="more" className="sr-only" disabled />
-                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm" title="Upgrade to unlock more durations">
+                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
                     +
+                  </span>
+                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
+                    Upgrade to unlock more
                   </span>
                 </label>
               </div>
             </div>
 
             {/* Word-capped textarea with live count */}
-            <>
+            <div>
               <textarea
                 value={text}
                 onChange={(e) => handleChange(e.target.value)}
@@ -238,7 +259,7 @@ export default function Home() {
               <div className="mt-1 text-xs italic text-black/60">
                 {duration === 30 ? "1,600+ words with Pro" : "2,000+ words with Pro"}
               </div>
-            </>
+            </div>
           </div>
         </div>
       </section>
