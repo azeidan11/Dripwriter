@@ -101,7 +101,7 @@ export default function Home() {
         {/* Demo box for your GIF */}
         <div id="demo" className="mx-auto mt-10 w-full max-w-5xl">
           <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-2 md:p-3">
-            <div className="aspect-[16/9] w-full overflow-hidden rounded-2xl bg-black/50 ring-1 ring-white/10">
+            <div className="aspect-[16/10] w-full overflow-hidden rounded-2xl bg-black/50 ring-1 ring-white/10">
               <img
                 src="/demo.gif"
                 alt="Dripwriter demo"
@@ -115,10 +115,10 @@ export default function Home() {
       {/* Software Section */}
       <section className="mx-auto w-full px-6 md:px-8 pb-20">
         <div className="mx-auto max-w-5xl">
-          <h2 className="text-3xl font-extrabold text-center mb-6 text-white/90">Try it Yourself</h2>
           <div className="rounded-3xl border border-white/20 bg-white/80 backdrop-blur-sm shadow-lg p-6">
+            <h2 className="text-2xl font-bold mb-4 text-black text-left">Try it Now for Free</h2>
             <textarea
-              className="w-full h-48 rounded-xl border border-gray-300 bg-white text-black p-4 resize-none focus:outline-none focus:ring-2 focus:ring-pink-300"
+              className="w-full h-96 rounded-xl border border-gray-300 bg-white text-black p-4 resize-none focus:outline-none focus:ring-2 focus:ring-pink-300"
               placeholder="Paste your text here..."
             />
           </div>
