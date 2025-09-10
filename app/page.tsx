@@ -137,7 +137,7 @@ export default function Home() {
             <div className="mb-4">
               <div className="text-base font-semibold text-black/80 mb-1">Total Duration</div>
               <p className="text-sm text-black/60 mb-3">
-                Choose how long it will take for your entire essay to finish dripping into your Google Doc.
+                Choose how long it will take for your pasted text to finish dripping into your Google Doc.
               </p>
               <div className="flex items-center gap-3 flex-wrap">
                 {/* 30 min */}
