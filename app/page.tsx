@@ -2,6 +2,19 @@
 import { useState } from "react";
 
 export default function Home() {
+  const [duration, setDuration] = useState<30 | 60>(30); // minutes
+  const [text, setText] = useState("");
+
+  const cap = duration === 30 ? 1200 : 1200; // adjust if you want different caps
+  const words = text.trim().length ? text.trim().split(/\s+/).length : 0;
+  const over = words > cap;
+
+  function handleChange(v: string) {
+    const arr = v.trim().split(/\s+/).filter(Boolean);
+    const tooMany = arr.length > cap;
+    const kept = tooMany ? arr.slice(0, cap).join(" ") + (v.endsWith(" ") ? " " : "") : v;
+    setText(kept);
+  }
   return (
     <main className="min-h-screen text-white">
       {/* Background image + dark overlay for readability */}
@@ -135,11 +148,7 @@ export default function Home() {
                     value="30"
                     className="peer sr-only"
                     defaultChecked
-                    onChange={(e) => {
-                      // @ts-ignore
-                      const setDuration = (window as any).__setDuration;
-                      if (setDuration) setDuration(30);
-                    }}
+                    onChange={() => setDuration(30)}
                   />
                   <span className="inline-flex items-center rounded-full border border-black/10 bg-white/70 text-black/80 backdrop-blur-sm px-4 py-2 shadow-sm transition
                                    peer-checked:bg-black peer-checked:text-white peer-checked:border-black/0">
@@ -153,11 +162,7 @@ export default function Home() {
                     name="duration"
                     value="60"
                     className="peer sr-only"
-                    onChange={(e) => {
-                      // @ts-ignore
-                      const setDuration = (window as any).__setDuration;
-                      if (setDuration) setDuration(60);
-                    }}
+                    onChange={() => setDuration(60)}
                   />
                   <span className="inline-flex items-center rounded-full border border-black/10 bg-white/70 text-black/80 backdrop-blur-sm px-4 py-2 shadow-sm transition
                                    peer-checked:bg-black peer-checked:text-white peer-checked:border-black/0">
@@ -217,72 +222,20 @@ export default function Home() {
             </div>
 
             {/* Word-capped textarea with live count */}
-            {(() => {
-              // Local client-only state handlers via window to avoid lifting whole page to a client component tree.
-              // We still exposed setters above via window to keep changes minimal in this file.
-              // Initialize only once.
-              if (!(window as any).__initDripwriterCap) {
-                (window as any).__initDripwriterCap = true;
-                (window as any).__duration = 30; // minutes
-                (window as any).__setDuration = (m: number) => ((window as any).__duration = m);
-                (window as any).__text = "";
-                (window as any).__listeners = new Set<() => void>();
-                (window as any).__subscribe = (fn: () => void) => ((window as any).__listeners.add(fn), () => (window as any).__listeners.delete(fn));
-                (window as any).__setText = (t: string) => {
-                  (window as any).__text = t;
-                  (window as any).__listeners.forEach((fn: () => void) => fn());
-                };
-              }
-
-              function useDripwriterModel() {
-                const [, force] = useState(0);
-                // subscribe to updates
-                useState(() => {
-                  // @ts-ignore
-                  const unsub = (window as any).__subscribe(() => force((x) => x + 1));
-                  return unsub;
-                });
-
-                // @ts-ignore
-                const duration: number = (window as any).__duration;
-                // @ts-ignore
-                const text: string = (window as any).__text;
-
-                const cap = duration === 30 ? 1200 : 1200; // same cap for both 30 and 60 for now
-                const words = text.trim().length ? text.trim().split(/\s+/).length : 0;
-                const over = words > cap;
-
-                function handleChange(v: string) {
-                  // Truncate to cap
-                  const arr = v.trim().split(/\s+/).filter(Boolean);
-                  const tooMany = arr.length > cap;
-                  const kept = tooMany ? arr.slice(0, cap).join(" ") + (v.endsWith(" ") ? " " : "") : v;
-                  // @ts-ignore
-                  (window as any).__setText(kept);
-                }
-
-                return { duration, cap, text, words, over, handleChange };
-              }
-
-              const { cap, text, words, over, handleChange } = useDripwriterModel();
-
-              return (
-                <>
-                  <textarea
-                    value={text}
-                    onChange={(e) => handleChange(e.target.value)}
-                    className={`w-full h-96 rounded-xl border bg-white text-black p-4 resize-none focus:outline-none focus:ring-2 ${
-                      over ? "border-red-400 focus:ring-red-300" : "border-gray-300 focus:ring-pink-300"
-                    }`}
-                    placeholder="Paste your text here..."
-                  />
-                  <div className={`mt-2 text-xs ${over ? "text-red-500" : "text-black/70"}`}>
-                    {words}/{cap} words
-                    {over && <span className="ml-2">• You’ve hit the limit for this duration.</span>}
-                  </div>
-                </>
-              );
-            })()}
+            <>
+              <textarea
+                value={text}
+                onChange={(e) => handleChange(e.target.value)}
+                className={`w-full h-96 rounded-xl border bg-white text-black p-4 resize-none focus:outline-none focus:ring-2 ${
+                  over ? "border-red-400 focus:ring-red-300" : "border-gray-300 focus:ring-pink-300"
+                }`}
+                placeholder="Paste your text here..."
+              />
+              <div className={`mt-2 text-xs ${over ? "text-red-500" : "text-black/70"}`}>
+                {words}/{cap} words
+                {over && <span className="ml-2">• You’ve hit the limit for this duration.</span>}
+              </div>
+            </>
           </div>
         </div>
       </section>
