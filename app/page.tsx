@@ -136,147 +136,150 @@ export default function Home() {
       <section className="mx-auto w-full px-6 md:px-8 pb-20">
         <div className="mx-auto max-w-5xl">
           <div className="rounded-3xl border border-white/20 bg-white/80 backdrop-blur-sm shadow-lg p-6 relative">
-            {!signedIn && (
-              <div className="absolute inset-0 z-10 grid place-items-center rounded-3xl bg-white/60 backdrop-blur-sm">
-                <div className="text-center px-6">
-                  <h3 className="text-black text-lg font-semibold">Sign in to continue</h3>
-                  <p className="text-black/70 text-sm mt-1">Connect Google to unlock the editor.</p>
-                  <button
-                    onClick={() => signIn("google")}
-                    className="mt-4 rounded-full bg-black text-white px-5 py-2 text-sm font-semibold hover:bg-black/90"
-                  >
-                    Sign in with Google
-                  </button>
+            <h2 className="text-2xl font-bold mb-4 text-black text-left">Try it Now for Free</h2>
+            <div className="relative">
+              {/* Overlay only over content below the heading */}
+              {!signedIn && (
+                <div className="absolute -inset-2 z-10 grid place-items-center rounded-2xl bg-white/40 backdrop-blur-sm">
+                  <div className="text-center px-6">
+                    <h3 className="text-black text-lg font-semibold">Sign in to continue</h3>
+                    <p className="text-black/70 text-sm mt-1">Connect Google to unlock the editor.</p>
+                    <button
+                      onClick={() => signIn("google")}
+                      className="mt-4 rounded-full bg-black text-white px-5 py-2 text-sm font-semibold hover:bg-black/90"
+                    >
+                      Sign in with Google
+                    </button>
+                  </div>
+                </div>
+              )}
+              {/* Duration toggles (controlled for cap logic) */}
+              <div className="mb-4">
+                <div className="text-base font-semibold text-black/80 mb-1">Total Duration</div>
+                <p className="text-sm text-black/60 mb-3">
+                  Choose how long it will take for your pasted text to finish dripping into your Google Doc.
+                </p>
+                <div className="flex items-center gap-3 flex-wrap">
+                  {/* 30 min */}
+                  <label className="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="duration"
+                      value="30"
+                      className="peer sr-only"
+                      defaultChecked
+                      onChange={() => setDuration(30)}
+                    />
+                    <span className="inline-flex items-center rounded-full border border-black/10 bg-white/70 text-black/80 backdrop-blur-sm px-4 py-2 shadow-sm transition
+                                     peer-checked:bg-black peer-checked:text-white peer-checked:border-black/0">
+                      30 min
+                    </span>
+                  </label>
+                  {/* 1 hr */}
+                  <label className="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="duration"
+                      value="60"
+                      className="peer sr-only"
+                      onChange={() => setDuration(60)}
+                    />
+                    <span className="inline-flex items-center rounded-full border border-black/10 bg-white/70 text-black/80 backdrop-blur-sm px-4 py-2 shadow-sm transition
+                                     peer-checked:bg-black peer-checked:text-white peer-checked:border-black/0">
+                      1 hr
+                    </span>
+                  </label>
+                  {/* 2 hrs (locked) */}
+                  <label className="group relative cursor-not-allowed opacity-60">
+                    <input type="radio" name="duration" value="120" className="sr-only" disabled />
+                    <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
+                      2 hrs
+                    </span>
+                    <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
+                      Upgrade to unlock
+                    </span>
+                  </label>
+                  {/* 6 hrs (locked) */}
+                  <label className="group relative cursor-not-allowed opacity-60">
+                    <input type="radio" name="duration" value="360" className="sr-only" disabled />
+                    <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
+                      6 hrs
+                    </span>
+                    <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
+                      Upgrade to unlock
+                    </span>
+                  </label>
+                  {/* 12 hrs (locked) */}
+                  <label className="group relative cursor-not-allowed opacity-60">
+                    <input type="radio" name="duration" value="720" className="sr-only" disabled />
+                    <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
+                      12 hrs
+                    </span>
+                    <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
+                      Upgrade to unlock
+                    </span>
+                  </label>
+                  {/* 1 day (locked) */}
+                  <label className="group relative cursor-not-allowed opacity-60">
+                    <input type="radio" name="duration" value="1440" className="sr-only" disabled />
+                    <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
+                      1 day
+                    </span>
+                    <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
+                      Upgrade to unlock
+                    </span>
+                  </label>
+                  {/* 3 days (locked) */}
+                  <label className="group relative cursor-not-allowed opacity-60">
+                    <input type="radio" name="duration" value="4320" className="sr-only" disabled />
+                    <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
+                      3 days
+                    </span>
+                    <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
+                      Upgrade to unlock
+                    </span>
+                  </label>
+                  {/* 1 week (locked) */}
+                  <label className="group relative cursor-not-allowed opacity-60">
+                    <input type="radio" name="duration" value="10080" className="sr-only" disabled />
+                    <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
+                      1 week
+                    </span>
+                    <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
+                      Upgrade to unlock
+                    </span>
+                  </label>
+                  {/* More (locked) */}
+                  <label className="group relative cursor-not-allowed opacity-60">
+                    <input type="radio" name="duration" value="more" className="sr-only" disabled />
+                    <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
+                      +
+                    </span>
+                    <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
+                      Upgrade to unlock more
+                    </span>
+                  </label>
                 </div>
               </div>
-            )}
-            <h2 className="text-2xl font-bold mb-4 text-black text-left">Try it Now for Free</h2>
-            {/* Duration toggles (controlled for cap logic) */}
-            <div className="mb-4">
-              <div className="text-base font-semibold text-black/80 mb-1">Total Duration</div>
-              <p className="text-sm text-black/60 mb-3">
-                Choose how long it will take for your pasted text to finish dripping into your Google Doc.
-              </p>
-              <div className="flex items-center gap-3 flex-wrap">
-                {/* 30 min */}
-                <label className="cursor-pointer">
-                  <input
-                    type="radio"
-                    name="duration"
-                    value="30"
-                    className="peer sr-only"
-                    defaultChecked
-                    onChange={() => setDuration(30)}
-                  />
-                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/70 text-black/80 backdrop-blur-sm px-4 py-2 shadow-sm transition
-                                   peer-checked:bg-black peer-checked:text-white peer-checked:border-black/0">
-                    30 min
-                  </span>
-                </label>
-                {/* 1 hr */}
-                <label className="cursor-pointer">
-                  <input
-                    type="radio"
-                    name="duration"
-                    value="60"
-                    className="peer sr-only"
-                    onChange={() => setDuration(60)}
-                  />
-                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/70 text-black/80 backdrop-blur-sm px-4 py-2 shadow-sm transition
-                                   peer-checked:bg-black peer-checked:text-white peer-checked:border-black/0">
-                    1 hr
-                  </span>
-                </label>
-                {/* 2 hrs (locked) */}
-                <label className="group relative cursor-not-allowed opacity-60">
-                  <input type="radio" name="duration" value="120" className="sr-only" disabled />
-                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
-                    2 hrs
-                  </span>
-                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
-                    Upgrade to unlock
-                  </span>
-                </label>
-                {/* 6 hrs (locked) */}
-                <label className="group relative cursor-not-allowed opacity-60">
-                  <input type="radio" name="duration" value="360" className="sr-only" disabled />
-                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
-                    6 hrs
-                  </span>
-                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
-                    Upgrade to unlock
-                  </span>
-                </label>
-                {/* 12 hrs (locked) */}
-                <label className="group relative cursor-not-allowed opacity-60">
-                  <input type="radio" name="duration" value="720" className="sr-only" disabled />
-                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
-                    12 hrs
-                  </span>
-                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
-                    Upgrade to unlock
-                  </span>
-                </label>
-                {/* 1 day (locked) */}
-                <label className="group relative cursor-not-allowed opacity-60">
-                  <input type="radio" name="duration" value="1440" className="sr-only" disabled />
-                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
-                    1 day
-                  </span>
-                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
-                    Upgrade to unlock
-                  </span>
-                </label>
-                {/* 3 days (locked) */}
-                <label className="group relative cursor-not-allowed opacity-60">
-                  <input type="radio" name="duration" value="4320" className="sr-only" disabled />
-                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
-                    3 days
-                  </span>
-                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
-                    Upgrade to unlock
-                  </span>
-                </label>
-                {/* 1 week (locked) */}
-                <label className="group relative cursor-not-allowed opacity-60">
-                  <input type="radio" name="duration" value="10080" className="sr-only" disabled />
-                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
-                    1 week
-                  </span>
-                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
-                    Upgrade to unlock
-                  </span>
-                </label>
-                {/* More (locked) */}
-                <label className="group relative cursor-not-allowed opacity-60">
-                  <input type="radio" name="duration" value="more" className="sr-only" disabled />
-                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
-                    +
-                  </span>
-                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
-                    Upgrade to unlock more
-                  </span>
-                </label>
-              </div>
-            </div>
 
-            {/* Word-capped textarea with live count */}
-            <div>
-              <textarea
-                disabled={!signedIn}
-                value={text}
-                onChange={(e) => handleChange(e.target.value)}
-                className={`w-full h-96 rounded-xl border bg-white text-black p-4 resize-none focus:outline-none focus:ring-2 ${
-                  over ? "border-red-400 focus:ring-red-300" : "border-gray-300 focus:ring-pink-300"
-                } ${!signedIn ? "opacity-60" : ""}`}
-                placeholder="Paste your text here..."
-              />
-              <div className={`mt-2 text-xs ${over ? "text-red-500" : "text-black/70"}`}>
-                {words}/{cap} words
-                {over && <span className="ml-2">• You’ve hit the limit for this duration.</span>}
-              </div>
-              <div className="mt-1 text-xs italic text-black/60">
-                {duration === 30 ? "1,600+ words with Pro" : "2,000+ words with Pro"}
+              {/* Word-capped textarea with live count */}
+              <div>
+                <textarea
+                  disabled={!signedIn}
+                  value={text}
+                  onChange={(e) => handleChange(e.target.value)}
+                  className={`w-full h-96 rounded-xl border bg-white text-black p-4 resize-none focus:outline-none focus:ring-2 ${
+                    over ? "border-red-400 focus:ring-red-300" : "border-gray-300 focus:ring-pink-300"
+                  } ${!signedIn ? "opacity-60" : ""}`}
+                  placeholder="Paste your text here..."
+                />
+                <div className={`mt-2 text-xs ${over ? "text-red-500" : "text-black/70"}`}>
+                  {words}/{cap} words
+                  {over && <span className="ml-2">• You’ve hit the limit for this duration.</span>}
+                </div>
+                <div className="mt-1 text-xs italic text-black/60">
+                  {duration === 30 ? "1,600+ words with Pro" : "2,000+ words with Pro"}
+                </div>
               </div>
             </div>
           </div>
