@@ -1,9 +1,13 @@
 "use client";
 import { useState } from "react";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 export default function Home() {
   const [duration, setDuration] = useState<30 | 60>(30); // minutes
   const [text, setText] = useState("");
+
+  const { data: session } = useSession();
+  const signedIn = !!session;
 
   const cap = duration === 30 ? 1200 : 1600; // adjust if you want different caps
   const words = text.trim().length ? text.trim().split(/\s+/).length : 0;
@@ -131,7 +135,21 @@ export default function Home() {
       {/* Software Section */}
       <section className="mx-auto w-full px-6 md:px-8 pb-20">
         <div className="mx-auto max-w-5xl">
-          <div className="rounded-3xl border border-white/20 bg-white/80 backdrop-blur-sm shadow-lg p-6">
+          <div className="rounded-3xl border border-white/20 bg-white/80 backdrop-blur-sm shadow-lg p-6 relative">
+            {!signedIn && (
+              <div className="absolute inset-0 z-10 grid place-items-center rounded-3xl bg-white/60 backdrop-blur-sm">
+                <div className="text-center px-6">
+                  <h3 className="text-black text-lg font-semibold">Sign in to continue</h3>
+                  <p className="text-black/70 text-sm mt-1">Connect Google to unlock the editor.</p>
+                  <button
+                    onClick={() => signIn("google")}
+                    className="mt-4 rounded-full bg-black text-white px-5 py-2 text-sm font-semibold hover:bg-black/90"
+                  >
+                    Sign in with Google
+                  </button>
+                </div>
+              </div>
+            )}
             <h2 className="text-2xl font-bold mb-4 text-black text-left">Try it Now for Free</h2>
             {/* Duration toggles (controlled for cap logic) */}
             <div className="mb-4">
@@ -245,11 +263,12 @@ export default function Home() {
             {/* Word-capped textarea with live count */}
             <div>
               <textarea
+                disabled={!signedIn}
                 value={text}
                 onChange={(e) => handleChange(e.target.value)}
                 className={`w-full h-96 rounded-xl border bg-white text-black p-4 resize-none focus:outline-none focus:ring-2 ${
                   over ? "border-red-400 focus:ring-red-300" : "border-gray-300 focus:ring-pink-300"
-                }`}
+                } ${!signedIn ? "opacity-60" : ""}`}
                 placeholder="Paste your text here..."
               />
               <div className={`mt-2 text-xs ${over ? "text-red-500" : "text-black/70"}`}>
