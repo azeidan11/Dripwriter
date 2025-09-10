@@ -115,7 +115,7 @@ export default function Home() {
       {/* Software Section */}
       <section className="mx-auto w-full px-6 md:px-8 pb-20">
         <div className="mx-auto max-w-5xl">
-          <h2 className="text-3xl font-extrabold text-center mb-6 text-white/90">Try Dripwriter Yourself</h2>
+          <h2 className="text-3xl font-extrabold text-center mb-6 text-white/90">Try it Yourself</h2>
           <div className="rounded-3xl border border-white/20 bg-white/80 backdrop-blur-sm shadow-lg p-6">
             <textarea
               className="w-full h-48 rounded-xl border border-gray-300 bg-white text-black p-4 resize-none focus:outline-none focus:ring-2 focus:ring-pink-300"
