@@ -1,3 +1,6 @@
+"use client";
+import { useState } from "react";
+
 export default function Home() {
   return (
     <main className="min-h-screen text-white">
@@ -117,7 +120,7 @@ export default function Home() {
         <div className="mx-auto max-w-5xl">
           <div className="rounded-3xl border border-white/20 bg-white/80 backdrop-blur-sm shadow-lg p-6">
             <h2 className="text-2xl font-bold mb-4 text-black text-left">Try it Now for Free</h2>
-            {/* Duration toggles */}
+            {/* Duration toggles (controlled for cap logic) */}
             <div className="mb-4">
               <div className="text-base font-semibold text-black/80 mb-1">Total Duration</div>
               <p className="text-sm text-black/60 mb-3">
@@ -126,7 +129,18 @@ export default function Home() {
               <div className="flex items-center gap-3 flex-wrap">
                 {/* 30 min */}
                 <label className="cursor-pointer">
-                  <input type="radio" name="duration" value="30" className="peer sr-only" defaultChecked />
+                  <input
+                    type="radio"
+                    name="duration"
+                    value="30"
+                    className="peer sr-only"
+                    defaultChecked
+                    onChange={(e) => {
+                      // @ts-ignore
+                      const setDuration = (window as any).__setDuration;
+                      if (setDuration) setDuration(30);
+                    }}
+                  />
                   <span className="inline-flex items-center rounded-full border border-black/10 bg-white/70 text-black/80 backdrop-blur-sm px-4 py-2 shadow-sm transition
                                    peer-checked:bg-black peer-checked:text-white peer-checked:border-black/0">
                     30 min
@@ -134,108 +148,141 @@ export default function Home() {
                 </label>
                 {/* 1 hr */}
                 <label className="cursor-pointer">
-                  <input type="radio" name="duration" value="60" className="peer sr-only" />
+                  <input
+                    type="radio"
+                    name="duration"
+                    value="60"
+                    className="peer sr-only"
+                    onChange={(e) => {
+                      // @ts-ignore
+                      const setDuration = (window as any).__setDuration;
+                      if (setDuration) setDuration(60);
+                    }}
+                  />
                   <span className="inline-flex items-center rounded-full border border-black/10 bg-white/70 text-black/80 backdrop-blur-sm px-4 py-2 shadow-sm transition
                                    peer-checked:bg-black peer-checked:text-white peer-checked:border-black/0">
                     1 hr
                   </span>
                 </label>
-                {/* 2 hrs */}
+                {/* 2 hrs (locked) */}
                 <label className="group relative cursor-not-allowed opacity-60">
                   <input type="radio" name="duration" value="120" className="sr-only" disabled />
-                  <span
-                    className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm"
-                  >
+                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
                     2 hrs
                   </span>
-                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
-                    Upgrade to unlock
-                  </span>
                 </label>
-
-                {/* 6 hrs */}
+                {/* 6 hrs (locked) */}
                 <label className="group relative cursor-not-allowed opacity-60">
                   <input type="radio" name="duration" value="360" className="sr-only" disabled />
-                  <span
-                    className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm"
-                  >
+                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
                     6 hrs
                   </span>
-                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
-                    Upgrade to unlock
-                  </span>
                 </label>
-
-                {/* 12 hrs */}
+                {/* 12 hrs (locked) */}
                 <label className="group relative cursor-not-allowed opacity-60">
                   <input type="radio" name="duration" value="720" className="sr-only" disabled />
-                  <span
-                    className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm"
-                  >
+                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
                     12 hrs
                   </span>
-                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
-                    Upgrade to unlock
-                  </span>
                 </label>
-
-                {/* 1 day */}
+                {/* 1 day (locked) */}
                 <label className="group relative cursor-not-allowed opacity-60">
                   <input type="radio" name="duration" value="1440" className="sr-only" disabled />
-                  <span
-                    className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm"
-                  >
+                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
                     1 day
                   </span>
-                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
-                    Upgrade to unlock
-                  </span>
                 </label>
-
-                {/* 3 days */}
+                {/* 3 days (locked) */}
                 <label className="group relative cursor-not-allowed opacity-60">
                   <input type="radio" name="duration" value="4320" className="sr-only" disabled />
-                  <span
-                    className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm"
-                  >
+                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
                     3 days
                   </span>
-                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
-                    Upgrade to unlock
-                  </span>
                 </label>
-
-                {/* 1 week */}
+                {/* 1 week (locked) */}
                 <label className="group relative cursor-not-allowed opacity-60">
                   <input type="radio" name="duration" value="10080" className="sr-only" disabled />
-                  <span
-                    className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm"
-                  >
+                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
                     1 week
                   </span>
-                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
-                    Upgrade to unlock
-                  </span>
                 </label>
-
-                {/* More options (locked) */}
+                {/* More (locked) */}
                 <label className="group relative cursor-not-allowed opacity-60">
                   <input type="radio" name="duration" value="more" className="sr-only" disabled />
-                  <span
-                    className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm"
-                  >
+                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
                     +
-                  </span>
-                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
-                    Upgrade to unlock more
                   </span>
                 </label>
               </div>
             </div>
-            <textarea
-              className="w-full h-96 rounded-xl border border-gray-300 bg-white text-black p-4 resize-none focus:outline-none focus:ring-2 focus:ring-pink-300"
-              placeholder="Paste your text here..."
-            />
+
+            {/* Word-capped textarea with live count */}
+            {(() => {
+              // Local client-only state handlers via window to avoid lifting whole page to a client component tree.
+              // We still exposed setters above via window to keep changes minimal in this file.
+              // Initialize only once.
+              if (!(window as any).__initDripwriterCap) {
+                (window as any).__initDripwriterCap = true;
+                (window as any).__duration = 30; // minutes
+                (window as any).__setDuration = (m: number) => ((window as any).__duration = m);
+                (window as any).__text = "";
+                (window as any).__listeners = new Set<() => void>();
+                (window as any).__subscribe = (fn: () => void) => ((window as any).__listeners.add(fn), () => (window as any).__listeners.delete(fn));
+                (window as any).__setText = (t: string) => {
+                  (window as any).__text = t;
+                  (window as any).__listeners.forEach((fn: () => void) => fn());
+                };
+              }
+
+              function useDripwriterModel() {
+                const [, force] = useState(0);
+                // subscribe to updates
+                useState(() => {
+                  // @ts-ignore
+                  const unsub = (window as any).__subscribe(() => force((x) => x + 1));
+                  return unsub;
+                });
+
+                // @ts-ignore
+                const duration: number = (window as any).__duration;
+                // @ts-ignore
+                const text: string = (window as any).__text;
+
+                const cap = duration === 30 ? 1200 : 1200; // same cap for both 30 and 60 for now
+                const words = text.trim().length ? text.trim().split(/\s+/).length : 0;
+                const over = words > cap;
+
+                function handleChange(v: string) {
+                  // Truncate to cap
+                  const arr = v.trim().split(/\s+/).filter(Boolean);
+                  const tooMany = arr.length > cap;
+                  const kept = tooMany ? arr.slice(0, cap).join(" ") + (v.endsWith(" ") ? " " : "") : v;
+                  // @ts-ignore
+                  (window as any).__setText(kept);
+                }
+
+                return { duration, cap, text, words, over, handleChange };
+              }
+
+              const { cap, text, words, over, handleChange } = useDripwriterModel();
+
+              return (
+                <>
+                  <textarea
+                    value={text}
+                    onChange={(e) => handleChange(e.target.value)}
+                    className={`w-full h-96 rounded-xl border bg-white text-black p-4 resize-none focus:outline-none focus:ring-2 ${
+                      over ? "border-red-400 focus:ring-red-300" : "border-gray-300 focus:ring-pink-300"
+                    }`}
+                    placeholder="Paste your text here..."
+                  />
+                  <div className={`mt-2 text-xs ${over ? "text-red-500" : "text-black/70"}`}>
+                    {words}/{cap} words
+                    {over && <span className="ml-2">• You’ve hit the limit for this duration.</span>}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
       </section>
