@@ -5,7 +5,7 @@ export default function Home() {
   const [duration, setDuration] = useState<30 | 60>(30); // minutes
   const [text, setText] = useState("");
 
-  const cap = duration === 30 ? 1200 : 1200; // adjust if you want different caps
+  const cap = duration === 30 ? 1200 : 1600; // adjust if you want different caps
   const words = text.trim().length ? text.trim().split(/\s+/).length : 0;
   const over = words > cap;
 
