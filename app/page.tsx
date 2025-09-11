@@ -36,16 +36,23 @@ export default function Home() {
           <a className="hover:text-white text-base" href="#features">Features</a>
           <a className="hover:text-white text-base" href="#pricing">Pricing</a>
           <a className="hover:text-white text-base" href="#faq">FAQ</a>
-          <a className="rounded-full bg-white text-black px-4 py-2 font-medium hover:bg-white/90 text-base" href="#get-started">Sign in</a>
+          <button
+            type="button"
+            onClick={() => signIn("google")}
+            className="rounded-full bg-white text-black px-4 py-2 font-medium hover:bg-white/90 text-base"
+          >
+            Sign in
+          </button>
         </nav>
         {/* Mobile actions */}
         <div className="md:hidden flex items-center gap-2">
-          <a
-            href="#get-started"
+          <button
+            type="button"
+            onClick={() => signIn("google")}
             className="rounded-full bg-white text-black px-4 py-2 font-medium hover:bg-white/90"
           >
             Sign in
-          </a>
+          </button>
           {/* Mobile hamburger (full-screen glass overlay, left-aligned menu) */}
           <details className="mobmenu relative">
             <summary
@@ -103,12 +110,13 @@ export default function Home() {
           </p>
 
           <div className="mt-6 flex items-center justify-center gap-3">
-            <a
-              href="#get-started"
+            <button
+              type="button"
+              onClick={() => signIn("google")}
               className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-black shadow-lg shadow-black/20 hover:bg-white/90"
             >
               Get started free
-            </a>
+            </button>
             <a
               href="#demo"
               className="rounded-full border border-white/20 bg-white/5 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10"
