@@ -209,8 +209,8 @@ export default function Home() {
           <style jsx global>{`
             .glass-fade {
               /* fade the left/right edges of the glass wrapper */
-              mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
-              -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+              mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
+              -webkit-mask-image: linear-gradient(to right, transparent, black 3%, black 97%, transparent);
             }
           `}</style>
                 </div>
