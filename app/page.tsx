@@ -216,6 +216,88 @@ export default function Home() {
                 </div>
               </div>
             </div>
+        {/* Problem → Outcome (Why it exists) */}
+        <section id="why" className="mx-auto w-full px-6 md:px-8 py-14 md:py-20">
+          <div className="mx-auto w-full max-w-7xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+              {/* Problem (left) */}
+              <div className="rounded-3xl p-6 md:p-8 border border-white/15 bg-gradient-to-br from-rose-500/25 via-fuchsia-500/20 to-purple-500/20 backdrop-blur-sm">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-3 py-1 text-xs uppercase tracking-wide text-white/80">
+                  Problem
+                </div>
+                <h3 className="mt-3 text-2xl md:text-3xl font-extrabold">Why copy–paste isn’t cutting it</h3>
+                <ul className="mt-4 space-y-3 text-white/85 md:text-lg">
+                  <li className="flex items-start gap-3 min-h-[56px] md:min-h-[64px]">
+                    <span className="mt-1">•</span>
+                    <span>Dumping AI text into Docs looks like a single burst — not how people actually type.</span>
+                  </li>
+                  <li className="flex items-start gap-3 min-h-[56px] md:min-h-[64px]">
+                    <span className="mt-1">•</span>
+                    <span>Version history feels unnatural when everything appears at once.</span>
+                  </li>
+                  <li className="flex items-start gap-3 min-h-[56px] md:min-h-[64px] -mt-3">
+                    <span className="mt-1">•</span>
+                    <span>No human pacing — no pauses, no paragraph rhythm, just a wall of text.</span>
+                  </li>
+                  <li className="flex items-start gap-3 min-h-[56px] md:min-h-[64px]">
+                    <span className="mt-1">•</span>
+                    <span>You’re stuck at the keyboard to make it look gradual.</span>
+                  </li>
+                  <li className="flex items-start gap-3 min-h-[56px] md:min-h-[64px]">
+                    <span className="mt-1">•</span>
+                    <span>Hard to pace long drafts — everything lands too fast or too slow.</span>
+                  </li>
+                  <li className="flex items-start gap-3 min-h-[56px] md:min-h-[64px]">
+                    <span className="mt-1">•</span>
+                    <span>Copy/paste juggling between tabs wastes time and breaks focus.</span>
+                  </li>
+                  <li className="flex items-start gap-3 min-h-[56px] md:min-h-[64px]">
+                    <span className="mt-1">•</span>
+                    <span>No simple way to resume a session where you left off.</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Outcome (right) */}
+              <div className="rounded-3xl p-6 md:p-8 border border-white/15 bg-gradient-to-br from-emerald-400/25 via-teal-400/20 to-sky-400/20 backdrop-blur-sm">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-3 py-1 text-xs uppercase tracking-wide text-white/80">
+                  Outcome
+                </div>
+                <h3 className="mt-3 text-2xl md:text-3xl font-extrabold">What Dripwriter gives you</h3>
+                <ul className="mt-4 space-y-3 text-white/85 md:text-lg">
+                  <li className="flex items-start gap-3 min-h-[56px] md:min-h-[64px]">
+                    <span className="mt-1">•</span>
+                    <span>Natural, human-paced edits that unfold over time — paragraphs, not dumps.</span>
+                  </li>
+                  <li className="flex items-start gap-3 min-h-[56px] md:min-h-[64px]">
+                    <span className="mt-1">•</span>
+                    <span>Clean, believable version history as the doc fills in on a schedule.</span>
+                  </li>
+                  <li className="flex items-start gap-3 min-h-[56px] md:min-h-[64px] -mt-3">
+                    <span className="mt-1">•</span>
+                    <span>Smart pauses that mimic real writing breaks and research moments.</span>
+                  </li>
+                  <li className="flex items-start gap-3 min-h-[56px] md:min-h-[64px]">
+                    <span className="mt-1">•</span>
+                    <span>Freedom to step away — set your duration and come back to completed progress.</span>
+                  </li>
+                  <li className="flex items-start gap-3 min-h-[56px] md:min-h-[64px]">
+                    <span className="mt-1">•</span>
+                    <span>Set-and-forget pacing — your draft unfolds on a schedule you control.</span>
+                  </li>
+                  <li className="flex items-start gap-3 min-h-[56px] md:min-h-[64px]">
+                    <span className="mt-1">•</span>
+                    <span>Direct Google Docs connection — no manual copying once you start.</span>
+                  </li>
+                  <li className="flex items-start gap-3 min-h-[56px] md:min-h-[64px]">
+                    <span className="mt-1">•</span>
+                    <span>Pause and resume controls so you can pick up exactly where you left off.</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
         {/* Demo box for your GIF */}
         <div id="demo" className="mx-auto mt-24 w-full max-w-5xl">
           <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-2 md:p-3">
