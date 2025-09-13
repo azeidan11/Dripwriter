@@ -168,7 +168,7 @@ export default function Home() {
       </header>
 
       {/* Hero */}
-      <section className="mx-auto w-full px-6 md:px-8 pt-20 pb-48 md:pt-28 md:pb-64 relative">
+      <section className="mx-auto w-full px-6 md:px-8 pt-20 pb-20 md:pt-28 md:pb-28 relative">
         <div className="text-center">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs uppercase tracking-wide text-white/70">
           AI-powered • Human-paced
@@ -436,6 +436,87 @@ export default function Home() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* FAQ (Expandable) */}
+      <section id="faq" className="mx-auto w-full px-6 md:px-8 pt-25 md:pt-25 -mt-16 md:-mt-24 pb-12 md:pb-16">
+        <div className="mx-auto w-full max-w-4xl">
+          <h2 className="text-center text-4xl md:text-5xl font-extrabold mb-6">FAQ</h2>
+
+          <div className="space-y-4">
+            {/* Item 1 */}
+            <details className="group rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm px-5 py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+                <span className="text-base md:text-lg font-semibold">How does Dripwriter work with Google Docs?</span>
+                <svg className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd"/></svg>
+              </summary>
+              <div className="mt-3 text-white/85">
+                After you sign in with Google and grant permission, Dripwriter connects to your Docs and types your pasted text over time according to the duration you pick.
+              </div>
+            </details>
+
+            {/* Item 2 */}
+            <details className="group rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm px-5 py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+                <span className="text-base md:text-lg font-semibold">What does “total duration” mean?</span>
+                <svg className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd"/></svg>
+              </summary>
+              <div className="mt-3 text-white/85">
+                It’s the overall time window (e.g., 30 minutes or 1 hour) during which your draft is gradually entered into your Google Doc.
+              </div>
+            </details>
+
+            {/* Item 3 */}
+            <details className="group rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm px-5 py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+                <span className="text-base md:text-lg font-semibold">Can I leave my computer while it’s running?</span>
+                <svg className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd"/></svg>
+              </summary>
+              <div className="mt-3 text-white/85">
+                Yes. Once started, Dripwriter handles the pacing automatically. You can pause or stop from the app at any time.
+              </div>
+            </details>
+
+            {/* Item 4 */}
+            <details className="group rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm px-5 py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+                <span className="text-base md:text-lg font-semibold">What’s included in the free tier?</span>
+                <svg className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd"/></svg>
+              </summary>
+              <div className="mt-3 text-white/85">
+                Access to 30 min and 1 hr durations with word caps. Longer schedules and higher caps are available with Pro.
+              </div>
+            </details>
+
+            {/* Item 5 */}
+            <details className="group rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm px-5 py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+                <span className="text-base md:text-lg font-semibold">Does it change my writing?</span>
+                <svg className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd"/></svg>
+              </summary>
+              <div className="mt-3 text-white/85">
+                No. Dripwriter simply enters the text you provide at a human pace. You stay in control of the content.
+              </div>
+            </details>
+
+            {/* Item 6 */}
+            <details className="group rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm px-5 py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+                <span className="text-base md:text-lg font-semibold">Can I connect multiple Google accounts?</span>
+                <svg className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd"/></svg>
+              </summary>
+              <div className="mt-3 text-white/85">
+                Support for switching accounts is planned. For now, connect the account you’ll use for your Docs.
+              </div>
+            </details>
+          </div>
+        </div>
+
+        {/* Rotate chevron on open for browsers without the Tailwind group-open plugin */}
+        <style jsx>{`
+          details > summary::-webkit-details-marker { display: none; }
+          details[open] summary svg { transform: rotate(180deg); }
+        `}</style>
       </section>
 
       {/* Software Section */}
