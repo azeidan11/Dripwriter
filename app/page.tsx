@@ -370,7 +370,7 @@ export default function Home() {
           </div>
         </section>
         {/* How it works (3 steps) */}
-        <section id="how" ref={howSectionRef} className="mx-auto w-full px-6 md:px-8 py-12 md:py-16">
+        <section id="how" ref={howSectionRef} className="mx-auto w-full px-6 md:px-8 pt-8 md:pt-10 pb-12 md:pb-16">
           <div className="mx-auto w-full max-w-6xl">
             <h2 className="text-center text-3xl md:text-4xl font-extrabold mb-8">How it works</h2>
             <p className="text-center text-white/80 max-w-2xl mx-auto mb-10 md:mb-12">Three simple steps to turn your draft into a human‑paced Google Doc.</p>
@@ -422,7 +422,7 @@ export default function Home() {
         <div
           id="demo"
           ref={demoRef}
-          className={`mx-auto mt-10 w-full max-w-5xl transform-gpu transition-all duration-300 ease-out ${
+          className={`mx-auto mt-6 w-full max-w-5xl transform-gpu transition-all duration-300 ease-out ${
             demoInView ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-90 translate-y-2"
           }`}
         >
