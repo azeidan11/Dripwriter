@@ -132,7 +132,7 @@ export default function Home() {
         </div>
         {/* Testimonials - seamless marquee above GIF (no reset) */}
         <div className="mx-auto mt-10 w-full max-w-8xl">
-          <div className="rounded-3xl border border-white/15 bg-white/10 backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.15)] overflow-hidden">
+          <div className="rounded-3xl border border-white/15 bg-white/10 backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.15)] overflow-hidden glass-fade relative">
             <div className="w-full py-6">
               <div className="marquee-outer">
                 <div className="marquee-inner">
@@ -204,6 +204,13 @@ export default function Home() {
             }
             @media (min-width: 768px) {
               .testimonial-pill { font-size: 16px; padding: 16px 24px; }
+            }
+          `}</style>
+          <style jsx global>{`
+            .glass-fade {
+              /* fade the left/right edges of the glass wrapper */
+              mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+              -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
             }
           `}</style>
                 </div>
