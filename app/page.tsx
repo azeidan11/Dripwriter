@@ -298,6 +298,55 @@ export default function Home() {
             </div>
           </div>
         </section>
+        {/* How it works (3 steps) */}
+        <section id="how" className="mx-auto w-full px-6 md:px-8 py-12 md:py-16">
+          <div className="mx-auto w-full max-w-6xl">
+            <h2 className="text-center text-3xl md:text-4xl font-extrabold mb-8">How it works</h2>
+            <p className="text-center text-white/80 max-w-2xl mx-auto mb-10 md:mb-12">Three simple steps to turn your draft into a human‑paced Google Doc.</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+              {/* Step 1 */}
+              <div className="rounded-3xl border border-white/15 bg-white/10 backdrop-blur-sm p-6 text-center">
+                <div className="mx-auto mb-4 size-14 md:size-16 rounded-2xl grid place-items-center border border-white/20 bg-white/10">
+                  {/* Paste icon */}
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7 md:h-8 md:w-8 text-white/90">
+                    <path d="M9 2a2 2 0 0 0-2 2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6v-2H6V6h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V6h1v4h2V6a2 2 0 0 0-2-2h-1a2 2 0 0 0-2-2H9Zm0 2h6v3H9V4Z"/>
+                  </svg>
+                </div>
+                <div className="text-sm uppercase tracking-wide text-white/70">Step 1</div>
+                <h3 className="mt-1 text-xl font-bold">Paste your draft</h3>
+                <p className="mt-2 text-white/80">Drop your essay into the box or paste it from anywhere.</p>
+              </div>
+
+              {/* Step 2 */}
+              <div className="rounded-3xl border border-white/15 bg-white/10 backdrop-blur-sm p-6 text-center">
+                <div className="mx-auto mb-4 size-14 md:size-16 rounded-2xl grid place-items-center border border-white/20 bg-white/10">
+                  {/* Duration/clock icon */}
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7 md:h-8 md:w-8 text-white/90">
+                    <path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm1 10.59V7h-2v6a1 1 0 0 0 .29.71l3.3 3.3 1.42-1.42Z"/>
+                  </svg>
+                </div>
+                <div className="text-sm uppercase tracking-wide text-white/70">Step 2</div>
+                <h3 className="mt-1 text-xl font-bold">Pick a total duration</h3>
+                <p className="mt-2 text-white/80">Choose 30 min or 1 hr in the free plan (more with Pro).</p>
+              </div>
+
+              {/* Step 3 */}
+              <div className="rounded-3xl border border-white/15 bg-white/10 backdrop-blur-sm p-6 text-center">
+                <div className="mx-auto mb-4 size-14 md:size-16 rounded-2xl grid place-items-center border border-white/20 bg-white/10">
+                  {/* Google Doc / drip icon */}
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7 md:h-8 md:w-8 text-white/90">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Zm0 2.5L18.5 9H14Z"/>
+                    <path d="M8 12h8v2H8zm0 4h8v2H8zm0-8h4v2H8z"/>
+                  </svg>
+                </div>
+                <div className="text-sm uppercase tracking-wide text-white/70">Step 3</div>
+                <h3 className="mt-1 text-xl font-bold">Watch it drip into Docs</h3>
+                <p className="mt-2 text-white/80">We type it in on a schedule with natural edits and pauses.</p>
+              </div>
+            </div>
+          </div>
+        </section>
         {/* Demo box for your GIF */}
         <div id="demo" className="mx-auto mt-24 w-full max-w-5xl">
           <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-2 md:p-3">
