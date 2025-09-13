@@ -131,9 +131,11 @@ export default function Home() {
           <span className="inline-block animate-bounce text-white text-5xl font-bold">↓</span>
         </div>
         {/* Testimonials - seamless marquee above GIF (no reset) */}
-        <div className="w-full py-6 mt-8">
-          <div className="marquee-outer">
-            <div className="marquee-inner">
+        <div className="mx-auto mt-10 w-full max-w-8xl">
+          <div className="rounded-3xl border border-white/15 bg-white/10 backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.15)] overflow-hidden">
+            <div className="w-full py-6">
+              <div className="marquee-outer">
+                <div className="marquee-inner">
               {/* group A */}
               <div className="marquee-group">
                 <span className="testimonial-pill">“I’m literally writing essays… without writing. Hit start and it does the typing.”</span>
@@ -204,7 +206,9 @@ export default function Home() {
               .testimonial-pill { font-size: 16px; padding: 16px 24px; }
             }
           `}</style>
-        </div>
+                </div>
+              </div>
+            </div>
         {/* Demo box for your GIF */}
         <div id="demo" className="mx-auto mt-24 w-full max-w-5xl">
           <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-2 md:p-3">
