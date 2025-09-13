@@ -313,7 +313,7 @@ export default function Home() {
             Dripwriter
           </h1>
           <p className="mx-auto mt-6 max-w-4xl text-white/85 text-xl md:text-3xl">
-            Paste your text. Pick a duration. Watch it drip it into your Google Doc on your schedule.
+            Paste your text. Pick a duration. Watch it drip into your Google Doc on your schedule.
           </p>
 
           <div className="mt-10 flex items-center justify-center gap-5">
@@ -570,7 +570,7 @@ export default function Home() {
                 </div>
                 <div className="text-sm uppercase tracking-wide text-white/70">Step 1</div>
                 <h3 className="mt-1 text-xl font-bold">Paste your draft</h3>
-                <p className="mt-2 text-white/80">Drop your essay into the box or paste it from anywhere.</p>
+                <p className="mt-2 text-white/80">Drop your text into the box or paste it from anywhere.</p>
               </div>
 
               {/* Step 2 */}
