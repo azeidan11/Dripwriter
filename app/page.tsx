@@ -130,6 +130,81 @@ export default function Home() {
         <div className="mt-30 text-center">
           <span className="inline-block animate-bounce text-white text-5xl font-bold">↓</span>
         </div>
+        {/* Testimonials - seamless marquee above GIF (no reset) */}
+        <div className="w-full py-6 mt-8">
+          <div className="marquee-outer">
+            <div className="marquee-inner">
+              {/* group A */}
+              <div className="marquee-group">
+                <span className="testimonial-pill">“I’m literally writing essays… without writing. Hit start and it does the typing.”</span>
+                <span className="testimonial-pill">“This is so clever — it even takes breaks mid‑way like I got distracted.”</span>
+                <span className="testimonial-pill">“I can doomscroll and ‘write’ at the same time. Productivity unlocked.”</span>
+                <span className="testimonial-pill">“Version history looks like a real person typed it. Chef’s kiss.”</span>
+                <span className="testimonial-pill">“Finally can go make a snack while my draft ‘appears’ in Google Docs.”</span>
+                <span className="testimonial-pill">“Picks a pace, groups sentences like paragraphs — feels human.”</span>
+                <span className="testimonial-pill">“Set 1 hour, come back to a finished draft. Wild.”</span>
+                <span className="testimonial-pill">“Looks like natural edits — starts, pauses, keeps going.”</span>
+              </div>
+              {/* group B (exact duplicate for seamless loop) */}
+              <div className="marquee-group" aria-hidden="true">
+                <span className="testimonial-pill">“I’m literally writing essays… without writing. Hit start and it does the typing.”</span>
+                <span className="testimonial-pill">“This is so clever — it even takes breaks mid‑way like I got distracted.”</span>
+                <span className="testimonial-pill">“I can doomscroll and ‘write’ at the same time. Productivity unlocked.”</span>
+                <span className="testimonial-pill">“Version history looks like a real person typed it. Chef’s kiss.”</span>
+                <span className="testimonial-pill">“Finally can go make a snack while my draft ‘appears’ in Google Docs.”</span>
+                <span className="testimonial-pill">“Picks a pace, groups sentences like paragraphs — feels human.”</span>
+                <span className="testimonial-pill">“Set 1 hour, come back to a finished draft. Wild.”</span>
+                <span className="testimonial-pill">“Looks like natural edits — starts, pauses, keeps going.”</span>
+              </div>
+            </div>
+          </div>
+
+          <style jsx>{`
+            @keyframes marquee {
+              0%   { transform: translate3d(0,0,0); }
+              100% { transform: translate3d(-50%,0,0); }
+            }
+            .marquee-outer {
+              overflow: hidden;
+              mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+              -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+            }
+            .marquee-inner {
+              display: flex;
+              width: max-content; /* shrink-wrap contents */
+              will-change: transform;
+              backface-visibility: hidden;
+              transform: translate3d(0,0,0);
+              animation: marquee 60s linear infinite;
+            }
+            .marquee-group {
+              display: flex;
+              align-items: center;
+              gap: 1rem;
+              padding-right: 1rem; /* tiny buffer so copy boundaries don't collide */
+            }
+            @media (min-width: 768px) {
+              .marquee-group { gap: 1.5rem; padding-right: 1.5rem; }
+            }
+            .testimonial-pill {
+              display: inline-flex;
+              align-items: center;
+              white-space: nowrap;
+              padding: 14px 18px; /* taller */
+              border-radius: 9999px;
+              border: 1px solid rgba(255,255,255,0.18);
+              background: rgba(255,255,255,0.10);
+              backdrop-filter: blur(6px);
+              color: #fff;
+              font-size: 15px; /* slightly larger */
+              line-height: 1.2;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+            }
+            @media (min-width: 768px) {
+              .testimonial-pill { font-size: 16px; padding: 16px 24px; }
+            }
+          `}</style>
+        </div>
         {/* Demo box for your GIF */}
         <div id="demo" className="mx-auto mt-24 w-full max-w-5xl">
           <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-2 md:p-3">
@@ -143,6 +218,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Software Section */}
 
       {/* Software Section */}
       <section className="mx-auto w-full px-6 md:px-8 pb-20">
