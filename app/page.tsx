@@ -499,8 +499,10 @@ export default function Home() {
               <div className={`rounded-3xl border border-white/15 bg-white/10 backdrop-blur-sm p-6 text-center transform-gpu transition-all duration-400 md:duration-500 ease-out ${how2In ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-3'}`}>
                 <div className="mx-auto mb-4 size-14 md:size-16 rounded-2xl grid place-items-center border border-white/20 bg-white/10">
                   {/* Duration/clock icon */}
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7 md:h-8 md:w-8 text-white/90">
-                    <path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm1 10.59V7h-2v6a1 1 0 0 0 .29.71l3.3 3.3 1.42-1.42Z"/>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-7 w-7 md:h-8 md:w-8 text-white">
+                    <circle cx="12" cy="12" r="9" />
+                    <line x1="12" y1="12" x2="12" y2="7" />
+                    <line x1="12" y1="12" x2="15" y2="12" />
                   </svg>
                 </div>
                 <div className="text-sm uppercase tracking-wide text-white/70">Step 2</div>
