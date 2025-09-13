@@ -19,6 +19,9 @@ export default function Home() {
   // FAQ stagger-in animation
   const [faqIn, setFaqIn] = useState(false);
   const faqSectionRef = useRef<HTMLDivElement | null>(null);
+  // CTA ("Ready to Drip Text?") word-by-word reveal
+  const [ctaIn, setCtaIn] = useState(false);
+  const ctaRef = useRef<HTMLHeadingElement | null>(null);
 
   useEffect(() => {
     const el = demoRef.current;
@@ -94,6 +97,25 @@ export default function Home() {
         });
       },
       { root: null, rootMargin: "0px", threshold: 0.45 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  // Trigger CTA word-by-word reveal when heading enters viewport
+  useEffect(() => {
+    const el = ctaRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setCtaIn(true);
+            obs.unobserve(entry.target);
+          }
+        });
+      },
+      { root: null, rootMargin: "0px", threshold: 0.4 }
     );
     obs.observe(el);
     return () => obs.disconnect();
@@ -216,7 +238,7 @@ export default function Home() {
           <button
             type="button"
             onClick={() => signIn("google")}
-            className="rounded-full bg-white text-black px-4 py-2 font-medium hover:bg-white/90 text-base"
+            className="cursor-pointer rounded-full bg-white text-black px-4 py-2 font-medium hover:bg-white/90 text-base"
           >
             Sign in
           </button>
@@ -226,7 +248,7 @@ export default function Home() {
           <button
             type="button"
             onClick={() => signIn("google")}
-            className="rounded-full bg-white text-black px-4 py-2 font-medium hover:bg-white/90"
+            className="cursor-pointer rounded-full bg-white text-black px-4 py-2 font-medium hover:bg-white/90"
           >
             Sign in
           </button>
@@ -290,7 +312,7 @@ export default function Home() {
             <button
               type="button"
               onClick={() => signIn("google")}
-              className="rounded-full bg-white px-6 py-4 text-base font-semibold text-black shadow-lg shadow-black/20 hover:bg-white/90"
+              className="cursor-pointer rounded-full bg-white px-6 py-4 text-base font-semibold text-black shadow-lg shadow-black/20 hover:bg-white/90"
             >
               Get started free
             </button>
@@ -478,7 +500,7 @@ export default function Home() {
         {/* How it works (3 steps) */}
         <section id="how" ref={howSectionRef} className="mx-auto w-full px-6 md:px-8 pt-8 md:pt-10 pb-12 md:pb-16">
           <div className="mx-auto w-full max-w-6xl">
-            <h2 className="text-center text-3xl md:text-4xl font-extrabold mb-8">How it works</h2>
+            <h2 className="text-center text-3xl md:text-4xl font-extrabold mb-8">How It Works</h2>
             <p className="text-center text-white/80 max-w-2xl mx-auto mb-10 md:mb-12">Three simple steps to turn your draft into a human‑paced Google Doc.</p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
@@ -547,126 +569,25 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FAQ (Expandable) */}
-      <section id="faq" ref={faqSectionRef} className="mx-auto w-full px-6 md:px-8 pt-25 md:pt-25 -mt-16 md:-mt-24 pb-12 md:pb-16">
-        <div className="mx-auto w-full max-w-6xl">
-          <h2 className="text-center text-3xl md:text-4xl font-extrabold mb-6">Frequently Asked Questions</h2>
-          <div className="rounded-3xl border border-white/15 bg-white/10 backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.15)] p-8 md:p-10 min-h-[26rem] md:min-h-[30rem]">
-            <div className={`space-y-5 faq-enter ${faqIn ? 'in' : ''}`}>
-            {/* Item 1 */}
-            <details className="faq group rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm px-5 py-4">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
-                <span className="text-base md:text-lg font-semibold">How does Dripwriter work with Google Docs?</span>
-                <svg className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd"/></svg>
-              </summary>
-              <div className="faq-content mt-3 text-white/85 overflow-hidden">
-                After you sign in with Google and grant permission, Dripwriter connects to your Docs and types your pasted text over time according to the duration you pick.
-              </div>
-            </details>
-
-            {/* Item 2 */}
-            <details className="faq group rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm px-5 py-4">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
-                <span className="text-base md:text-lg font-semibold">What does “total duration” mean?</span>
-                <svg className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd"/></svg>
-              </summary>
-              <div className="faq-content mt-3 text-white/85 overflow-hidden">
-                It’s the overall time window (e.g., 30 minutes or 1 hour) during which your draft is gradually entered into your Google Doc.
-              </div>
-            </details>
-
-            {/* Item 3 */}
-            <details className="faq group rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm px-5 py-4">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
-                <span className="text-base md:text-lg font-semibold">Can I leave my computer while it’s running?</span>
-                <svg className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd"/></svg>
-              </summary>
-              <div className="faq-content mt-3 text-white/85 overflow-hidden">
-                Yes. Once started, Dripwriter handles the pacing automatically. You can pause or stop from the app at any time.
-              </div>
-            </details>
-
-            {/* Item 4 */}
-            <details className="faq group rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm px-5 py-4">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
-                <span className="text-base md:text-lg font-semibold">What’s included in the free tier?</span>
-                <svg className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd"/></svg>
-              </summary>
-              <div className="faq-content mt-3 text-white/85 overflow-hidden">
-                Access to 30 min and 1 hr durations with word caps. Longer schedules and higher caps are available with Pro.
-              </div>
-            </details>
-
-            {/* Item 5 */}
-            <details className="faq group rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm px-5 py-4">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
-                <span className="text-base md:text-lg font-semibold">Does it change my writing?</span>
-                <svg className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd"/></svg>
-              </summary>
-              <div className="faq-content mt-3 text-white/85 overflow-hidden">
-                No. Dripwriter simply enters the text you provide at a human pace. You stay in control of the content.
-              </div>
-            </details>
-
-            {/* Item 6 */}
-            <details className="faq group rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm px-5 py-4">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
-                <span className="text-base md:text-lg font-semibold">Can I connect multiple Google accounts?</span>
-                <svg className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd"/></svg>
-              </summary>
-              <div className="faq-content mt-3 text-white/85 overflow-hidden">
-                Support for switching accounts is planned. For now, connect the account you’ll use for your Docs.
-              </div>
-            </details>
-            </div>
-          </div>
-        </div>
-
-        {/* FAQ chevron and smooth expand/collapse */}
-        <style jsx global>{`
-          /* Hide default marker */
-          details > summary::-webkit-details-marker { display: none; }
-          /* Rotate chevron when open (for browsers without group-open support) */
-          details[open] summary svg { transform: rotate(180deg); }
-
-          /* Staggered reveal for FAQ items */
-          .faq-enter details.faq {
-            opacity: 0;
-            transform: translateY(8px);
-            transition: opacity 420ms ease, transform 420ms ease;
-          }
-          .faq-enter.in details.faq { opacity: 1; transform: translateY(0); }
-          .faq-enter.in details.faq:nth-child(1) { transition-delay: 0ms; }
-          .faq-enter.in details.faq:nth-child(2) { transition-delay: 70ms; }
-          .faq-enter.in details.faq:nth-child(3) { transition-delay: 140ms; }
-          .faq-enter.in details.faq:nth-child(4) { transition-delay: 210ms; }
-          .faq-enter.in details.faq:nth-child(5) { transition-delay: 280ms; }
-          .faq-enter.in details.faq:nth-child(6) { transition-delay: 350ms; }
-
-          /* Smooth expand/collapse for FAQ answers */
-          .faq .faq-content {
-            max-height: 0;
-            opacity: 0;
-            transform: translateY(-4px);
-            transition: max-height 600ms ease, opacity 450ms ease, transform 450ms ease;
-          }
-          .faq[open] .faq-content {
-            max-height: 600px;
-          }
-
-          /* Respect reduced motion */
-          @media (prefers-reduced-motion: reduce) {
-            .faq .faq-content { transition: none; }
-          }
-        `}</style>
-      </section>
-
       {/* Software Section */}
-
-      {/* Software Section */}
-      <section className="mx-auto w-full px-6 md:px-8 pb-20">
+      <section className="mx-auto w-full px-6 md:px-8 pt-0 md:pt-4 pb-20">
         <div className="mx-auto max-w-5xl">
-          <div className="rounded-3xl border border-white/20 bg-white/80 backdrop-blur-sm shadow-lg p-6 relative">
+          <h2 ref={ctaRef} className="text-center text-4xl md:text-5xl font-extrabold text-white mb-6">
+            {["Ready", "to", "Drip", "Text?"].map((word, i) => (
+              <span
+                key={word + i}
+                className={`inline-block transition-all duration-500 ease-out ${ctaIn ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}
+                style={{ transitionDelay: `${i * 90}ms` }}
+              >
+                {word}
+                {i < 3 ? '\u00A0' : ''}
+              </span>
+            ))}
+          </h2>
+          <div
+            className="rounded-3xl border border-white/20 bg-white/80 backdrop-blur-sm shadow-lg p-6 relative transform-gpu transition-transform duration-400 ease-out hover:scale-[1.03] hover:shadow-xl"
+            style={{ willChange: 'transform' }}
+          >
             <h2 className="text-2xl font-bold mb-4 text-black text-left">Try it Now for Free</h2>
             <div className="relative">
               {/* Overlay only over content below the heading */}
@@ -677,7 +598,7 @@ export default function Home() {
                     <p className="text-black/70 text-sm mt-1">Connect Google to unlock the editor.</p>
                     <button
                       onClick={() => signIn("google")}
-                      className="mt-4 rounded-full bg-black text-white px-5 py-2 text-sm font-semibold hover:bg-black/90"
+                      className="cursor-pointer mt-4 rounded-full bg-black text-white px-5 py-2 text-sm font-semibold hover:bg-black/90"
                     >
                       Sign in with Google
                     </button>
@@ -799,9 +720,10 @@ export default function Home() {
                   disabled={!signedIn}
                   value={text}
                   onChange={(e) => handleChange(e.target.value)}
-                  className={`w-full h-96 rounded-xl border bg-white text-black p-4 resize-none focus:outline-none focus:ring-2 ${
+                  className={`w-full h-96 rounded-xl border bg-white text-black p-4 resize-none focus:outline-none focus:ring-2 transform-gpu transition-transform duration-200 ease-out hover:scale-[1.01] focus:scale-[1.01] ${
                     over ? "border-red-400 focus:ring-red-300" : "border-gray-300 focus:ring-pink-300"
                   } ${!signedIn ? "opacity-60" : ""}`}
+                  style={{ willChange: 'transform' }}
                   placeholder="Paste your text here..."
                 />
                 <div className={`mt-2 text-xs ${over ? "text-red-500" : "text-black/70"}`}>
@@ -816,6 +738,123 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* FAQ (Expandable) */}
+      <section id="faq" ref={faqSectionRef} className="mx-auto w-full px-6 md:px-8 pt-25 md:pt-25 -mt-10 md:-mt-10 pb-12 md:pb-16">
+        <div className="mx-auto w-full max-w-6xl">
+          <h2 className="text-center text-3xl md:text-4xl font-extrabold mb-6">Frequently Asked Questions</h2>
+          <div className="rounded-3xl border border-white/15 bg-white/10 backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.15)] p-8 md:p-10 min-h-[26rem] md:min-h-[30rem]">
+            <div className={`space-y-5 faq-enter ${faqIn ? 'in' : ''}`}>
+            {/* Item 1 */}
+            <details className="faq group rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm px-5 py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+                <span className="text-base md:text-lg font-semibold">How does Dripwriter work with Google Docs?</span>
+                <svg className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd"/></svg>
+              </summary>
+              <div className="faq-content mt-3 text-white/85 overflow-hidden">
+                After you sign in with Google and grant permission, Dripwriter connects to your Docs and types your pasted text over time according to the duration you pick.
+              </div>
+            </details>
+
+            {/* Item 2 */}
+            <details className="faq group rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm px-5 py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+                <span className="text-base md:text-lg font-semibold">What does “total duration” mean?</span>
+                <svg className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd"/></svg>
+              </summary>
+              <div className="faq-content mt-3 text-white/85 overflow-hidden">
+                It’s the overall time window (e.g., 30 minutes or 1 hour) during which your draft is gradually entered into your Google Doc.
+              </div>
+            </details>
+
+            {/* Item 3 */}
+            <details className="faq group rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm px-5 py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+                <span className="text-base md:text-lg font-semibold">Can I leave my computer while it’s running?</span>
+                <svg className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd"/></svg>
+              </summary>
+              <div className="faq-content mt-3 text-white/85 overflow-hidden">
+                Yes. Once started, Dripwriter handles the pacing automatically. You can pause or stop from the app at any time.
+              </div>
+            </details>
+
+            {/* Item 4 */}
+            <details className="faq group rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm px-5 py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+                <span className="text-base md:text-lg font-semibold">What’s included in the free tier?</span>
+                <svg className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd"/></svg>
+              </summary>
+              <div className="faq-content mt-3 text-white/85 overflow-hidden">
+                Access to 30 min and 1 hr durations with word caps. Longer schedules and higher caps are available with Pro.
+              </div>
+            </details>
+
+            {/* Item 5 */}
+            <details className="faq group rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm px-5 py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+                <span className="text-base md:text-lg font-semibold">Does it change my writing?</span>
+                <svg className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd"/></svg>
+              </summary>
+              <div className="faq-content mt-3 text-white/85 overflow-hidden">
+                No. Dripwriter simply enters the text you provide at a human pace. You stay in control of the content.
+              </div>
+            </details>
+
+            {/* Item 6 */}
+            <details className="faq group rounded-2xl border border-white/15 bg-white/10 backdrop-blur-sm px-5 py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+                <span className="text-base md:text-lg font-semibold">Can I connect multiple Google accounts?</span>
+                <svg className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd"/></svg>
+              </summary>
+              <div className="faq-content mt-3 text-white/85 overflow-hidden">
+                Support for switching accounts is planned. For now, connect the account you’ll use for your Docs.
+              </div>
+            </details>
+            </div>
+          </div>
+        </div>
+
+        {/* FAQ chevron and smooth expand/collapse */}
+        <style jsx global>{`
+          /* Hide default marker */
+          details > summary::-webkit-details-marker { display: none; }
+          /* Rotate chevron when open (for browsers without group-open support) */
+          details[open] summary svg { transform: rotate(180deg); }
+
+          /* Staggered reveal for FAQ items */
+          .faq-enter details.faq {
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 420ms ease, transform 420ms ease;
+          }
+          .faq-enter.in details.faq { opacity: 1; transform: translateY(0); }
+          .faq-enter.in details.faq:nth-child(1) { transition-delay: 0ms; }
+          .faq-enter.in details.faq:nth-child(2) { transition-delay: 70ms; }
+          .faq-enter.in details.faq:nth-child(3) { transition-delay: 140ms; }
+          .faq-enter.in details.faq:nth-child(4) { transition-delay: 210ms; }
+          .faq-enter.in details.faq:nth-child(5) { transition-delay: 280ms; }
+          .faq-enter.in details.faq:nth-child(6) { transition-delay: 350ms; }
+
+          /* Smooth expand/collapse for FAQ answers */
+          .faq .faq-content {
+            max-height: 0;
+            opacity: 0;
+            transform: translateY(-4px);
+            transition: max-height 600ms ease, opacity 450ms ease, transform 450ms ease;
+          }
+          .faq[open] .faq-content {
+            max-height: 600px;
+          }
+
+          /* Respect reduced motion */
+          @media (prefers-reduced-motion: reduce) {
+            .faq .faq-content { transition: none; }
+          }
+        `}</style>
+      </section>
+
+      {/* Software Section */}
+
 
       {/* Footer */}
       <footer className="mx-auto w-full px-6 md:px-8 pb-10 text-sm text-white/60">
