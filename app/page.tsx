@@ -221,7 +221,7 @@ export default function Home() {
           <div className="mx-auto w-full max-w-7xl">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
               {/* Problem (left) */}
-              <div className="rounded-3xl p-6 md:p-8 border border-white/15 bg-gradient-to-br from-rose-500/25 via-fuchsia-500/20 to-purple-500/20 backdrop-blur-sm">
+              <div className="rounded-3xl p-6 md:p-8 border border-white/15 bg-gradient-to-br from-emerald-400/25 via-teal-400/20 to-sky-400/20 backdrop-blur-sm">
                 <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-3 py-1 text-xs uppercase tracking-wide text-white/80">
                   Problem
                 </div>
@@ -259,7 +259,7 @@ export default function Home() {
               </div>
 
               {/* Outcome (right) */}
-              <div className="rounded-3xl p-6 md:p-8 border border-white/15 bg-gradient-to-br from-emerald-400/25 via-teal-400/20 to-sky-400/20 backdrop-blur-sm">
+              <div className="rounded-3xl p-6 md:p-8 border border-white/15 bg-gradient-to-br from-rose-500/25 via-fuchsia-500/20 to-purple-500/20 backdrop-blur-sm">
                 <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-3 py-1 text-xs uppercase tracking-wide text-white/80">
                   Outcome
                 </div>
