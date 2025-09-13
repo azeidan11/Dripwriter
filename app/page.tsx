@@ -97,37 +97,41 @@ export default function Home() {
       </header>
 
       {/* Hero */}
-      <section className="mx-auto w-full px-6 md:px-8 pt-2 pb-16 md:pt-5 md:pb-24">
+      <section className="mx-auto w-full px-6 md:px-8 pt-20 pb-48 md:pt-28 md:pb-64 relative">
         <div className="text-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-wide text-white/70">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs uppercase tracking-wide text-white/70">
           AI-powered • Human-paced
           </span>
-          <h1 className="mt-4 text-4xl font-extrabold leading-tight tracking-tight md:text-6xl">
+          <h1 className="mt-6 text-6xl font-extrabold leading-tight tracking-tight md:text-8xl">
             Dripwriter
           </h1>
-          <p className="mx-auto mt-3 max-w-3xl text-white/80 md:text-lg">
+          <p className="mx-auto mt-6 max-w-4xl text-white/85 text-xl md:text-3xl">
             Paste your text. Pick a duration. Watch it drip it into your Google Doc on your schedule.
           </p>
 
-          <div className="mt-6 flex items-center justify-center gap-3">
+          <div className="mt-10 flex items-center justify-center gap-5">
             <button
               type="button"
               onClick={() => signIn("google")}
-              className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-black shadow-lg shadow-black/20 hover:bg-white/90"
+              className="rounded-full bg-white px-6 py-4 text-base font-semibold text-black shadow-lg shadow-black/20 hover:bg-white/90"
             >
               Get started free
             </button>
             <a
               href="#demo"
-              className="rounded-full border border-white/20 bg-white/5 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10"
+              className="rounded-full border border-white/20 bg-white/5 px-6 py-4 text-base font-semibold text-white hover:bg-white/10"
             >
               See how it works
             </a>
           </div>
         </div>
 
+        {/* New centered arrow above the GIF */}
+        <div className="mt-30 text-center">
+          <span className="inline-block animate-bounce text-white text-5xl font-bold">↓</span>
+        </div>
         {/* Demo box for your GIF */}
-        <div id="demo" className="mx-auto mt-10 w-full max-w-5xl">
+        <div id="demo" className="mx-auto mt-24 w-full max-w-5xl">
           <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-2 md:p-3">
             <div className="aspect-[16/10] w-full overflow-hidden rounded-2xl bg-black/50 ring-1 ring-white/10">
               <img
