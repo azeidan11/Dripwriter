@@ -1,10 +1,81 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 
 export default function Home() {
   const [duration, setDuration] = useState<30 | 60>(30); // minutes
   const [text, setText] = useState("");
+  const [demoInView, setDemoInView] = useState(false);
+  const demoRef = useRef<HTMLDivElement | null>(null);
+  // Problem/Outcome reveal states and ref
+  const [whyLeftIn, setWhyLeftIn] = useState(false);
+  const [whyRightIn, setWhyRightIn] = useState(false);
+  const whySectionRef = useRef<HTMLDivElement | null>(null);
+  // How it works (3 steps) reveal
+  const [how1In, setHow1In] = useState(false);
+  const [how2In, setHow2In] = useState(false);
+  const [how3In, setHow3In] = useState(false);
+  const howSectionRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const el = demoRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setDemoInView(true);
+            obs.unobserve(entry.target);
+          }
+        });
+      },
+      { root: null, rootMargin: "0px", threshold: 0.2 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  // Animate Problem/Outcome cards in when section enters viewport
+  useEffect(() => {
+    const el = whySectionRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setWhyLeftIn(true);
+            // Stagger the right card slightly after the left
+            setTimeout(() => setWhyRightIn(true), 120);
+            obs.unobserve(entry.target);
+          }
+        });
+      },
+      { root: null, rootMargin: "0px", threshold: 0.35 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  // Animate How-it-works cards with a left-to-right stagger
+  useEffect(() => {
+    const el = howSectionRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setHow1In(true);
+            setTimeout(() => setHow2In(true), 100);
+            setTimeout(() => setHow3In(true), 200);
+            obs.unobserve(entry.target);
+          }
+        });
+      },
+      { root: null, rootMargin: "0px", threshold: 0.65 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
   const { data: session } = useSession();
   const signedIn = !!session;
@@ -217,11 +288,11 @@ export default function Home() {
               </div>
             </div>
         {/* Problem → Outcome (Why it exists) */}
-        <section id="why" className="mx-auto w-full px-6 md:px-8 py-14 md:py-20">
+        <section id="why" ref={whySectionRef} className="mx-auto w-full px-6 md:px-8 py-14 md:py-20">
           <div className="mx-auto w-full max-w-7xl">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
               {/* Problem (left) */}
-              <div className="rounded-3xl p-6 md:p-8 border border-white/15 bg-gradient-to-br from-emerald-400/25 via-teal-400/20 to-sky-400/20 backdrop-blur-sm">
+              <div className={`rounded-3xl p-6 md:p-8 border border-white/15 bg-gradient-to-br from-emerald-400/25 via-teal-400/20 to-sky-400/20 backdrop-blur-sm transform-gpu transition-all duration-250 md:duration-300 ease-out ${whyLeftIn ? 'opacity-100 translate-y-0 translate-x-0' : 'opacity-0 translate-y-2 -translate-x-3'}`}>
                 <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-3 py-1 text-xs uppercase tracking-wide text-white/80">
                   Problem
                 </div>
@@ -259,7 +330,7 @@ export default function Home() {
               </div>
 
               {/* Outcome (right) */}
-              <div className="rounded-3xl p-6 md:p-8 border border-white/15 bg-gradient-to-br from-rose-500/25 via-fuchsia-500/20 to-purple-500/20 backdrop-blur-sm">
+              <div className={`rounded-3xl p-6 md:p-8 border border-white/15 bg-gradient-to-br from-rose-500/25 via-fuchsia-500/20 to-purple-500/20 backdrop-blur-sm transform-gpu transition-all duration-250 md:duration-300 ease-out ${whyRightIn ? 'opacity-100 translate-y-0 translate-x-0' : 'opacity-0 translate-y-2 translate-x-3'}`}>
                 <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-3 py-1 text-xs uppercase tracking-wide text-white/80">
                   Outcome
                 </div>
@@ -299,14 +370,14 @@ export default function Home() {
           </div>
         </section>
         {/* How it works (3 steps) */}
-        <section id="how" className="mx-auto w-full px-6 md:px-8 py-12 md:py-16">
+        <section id="how" ref={howSectionRef} className="mx-auto w-full px-6 md:px-8 py-12 md:py-16">
           <div className="mx-auto w-full max-w-6xl">
             <h2 className="text-center text-3xl md:text-4xl font-extrabold mb-8">How it works</h2>
             <p className="text-center text-white/80 max-w-2xl mx-auto mb-10 md:mb-12">Three simple steps to turn your draft into a human‑paced Google Doc.</p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
               {/* Step 1 */}
-              <div className="rounded-3xl border border-white/15 bg-white/10 backdrop-blur-sm p-6 text-center">
+              <div className={`rounded-3xl border border-white/15 bg-white/10 backdrop-blur-sm p-6 text-center transform-gpu transition-all duration-400 md:duration-500 ease-out ${how1In ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-3'}`}>
                 <div className="mx-auto mb-4 size-14 md:size-16 rounded-2xl grid place-items-center border border-white/20 bg-white/10">
                   {/* Paste icon */}
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7 md:h-8 md:w-8 text-white/90">
@@ -319,7 +390,7 @@ export default function Home() {
               </div>
 
               {/* Step 2 */}
-              <div className="rounded-3xl border border-white/15 bg-white/10 backdrop-blur-sm p-6 text-center">
+              <div className={`rounded-3xl border border-white/15 bg-white/10 backdrop-blur-sm p-6 text-center transform-gpu transition-all duration-400 md:duration-500 ease-out ${how2In ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-3'}`}>
                 <div className="mx-auto mb-4 size-14 md:size-16 rounded-2xl grid place-items-center border border-white/20 bg-white/10">
                   {/* Duration/clock icon */}
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7 md:h-8 md:w-8 text-white/90">
@@ -332,7 +403,7 @@ export default function Home() {
               </div>
 
               {/* Step 3 */}
-              <div className="rounded-3xl border border-white/15 bg-white/10 backdrop-blur-sm p-6 text-center">
+              <div className={`rounded-3xl border border-white/15 bg-white/10 backdrop-blur-sm p-6 text-center transform-gpu transition-all duration-400 md:duration-500 ease-out ${how3In ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-3'}`}>
                 <div className="mx-auto mb-4 size-14 md:size-16 rounded-2xl grid place-items-center border border-white/20 bg-white/10">
                   {/* Google Doc / drip icon */}
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7 md:h-8 md:w-8 text-white/90">
@@ -348,7 +419,13 @@ export default function Home() {
           </div>
         </section>
         {/* Demo box for your GIF */}
-        <div id="demo" className="mx-auto mt-24 w-full max-w-5xl">
+        <div
+          id="demo"
+          ref={demoRef}
+          className={`mx-auto mt-10 w-full max-w-5xl transform-gpu transition-all duration-300 ease-out ${
+            demoInView ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-90 translate-y-2"
+          }`}
+        >
           <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-2 md:p-3">
             <div className="aspect-[16/10] w-full overflow-hidden rounded-2xl bg-black/50 ring-1 ring-white/10">
               <img
