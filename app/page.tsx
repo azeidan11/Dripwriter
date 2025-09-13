@@ -514,10 +514,11 @@ export default function Home() {
               <div className={`rounded-3xl border border-white/15 bg-white/10 backdrop-blur-sm p-6 text-center transform-gpu transition-all duration-400 md:duration-500 ease-out ${how3In ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-3'}`}>
                 <div className="mx-auto mb-4 size-14 md:size-16 rounded-2xl grid place-items-center border border-white/20 bg-white/10">
                   {/* Google Doc / drip icon */}
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7 md:h-8 md:w-8 text-white/90">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Zm0 2.5L18.5 9H14Z"/>
-                    <path d="M8 12h8v2H8zm0 4h8v2H8zm0-8h4v2H8z"/>
-                  </svg>
+                  <img
+                    src="/google-docs.png"
+                    alt="Google Docs Icon"
+                    className="h-7 w-7 md:h-8 md:w-8 object-contain"
+                  />
                 </div>
                 <div className="text-sm uppercase tracking-wide text-white/70">Step 3</div>
                 <h3 className="mt-1 text-xl font-bold">Watch it drip into Docs</h3>
