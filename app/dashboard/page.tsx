@@ -66,7 +66,7 @@ export default function DashboardPage() {
 
           {/* Card copied to match landing styles */}
           <div
-            className="relative rounded-3xl border border-white/20 bg-white/80 backdrop-blur-sm shadow-lg p-6 transform-gpu transition-transform duration-400 ease-out hover:scale-[1.03] hover:shadow-xl"
+            className="relative rounded-3xl border border-white/20 bg-white/80 backdrop-blur-sm shadow-lg p-6 transform-gpu transition-transform duration-400 ease-out hover:shadow-xl"
             style={{ willChange: "transform" }}
           >
             <h2 className="text-2xl font-bold mb-4 text-black text-left">Try it Now for Free</h2>
@@ -134,7 +134,7 @@ export default function DashboardPage() {
                 disabled={!signedIn}
                 value={text}
                 onChange={(e) => handleChange(e.target.value)}
-                className={`w-full h-96 rounded-xl border bg-white text-black p-4 resize-none focus:outline-none focus:ring-2 transform-gpu transition-transform duration-200 ease-out hover:scale-[1.01] focus:scale-[1.01] ${
+                className={`w-full h-96 rounded-xl border bg-white text-black p-4 resize-none focus:outline-none focus:ring-2 transform-gpu transition-transform duration-200 ease-out ${
                   over ? "border-red-400 focus:ring-red-300" : "border-gray-300 focus:ring-pink-300"
                 }`}
                 placeholder="Paste your text here..."
