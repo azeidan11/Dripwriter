@@ -4,7 +4,28 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useSession, signIn } from "next-auth/react";
 
-type Duration = 30 | 60;
+type Duration = 30 | 60 | 120 | 360 | 720 | 1440 | 4320 | 10080;
+
+const DURATIONS: { label: string; value: Duration }[] = [
+  { label: "30 min", value: 30 },
+  { label: "1 hr", value: 60 },
+  { label: "2 hrs", value: 120 },
+  { label: "6 hrs", value: 360 },
+  { label: "12 hrs", value: 720 },
+  { label: "1 day", value: 1440 },
+  { label: "3 days", value: 4320 },
+  { label: "1 week", value: 10080 },
+];
+const PRO_CAPS: Record<Duration, number> = {
+  30: 2000,
+  60: 2500,
+  120: 3500,
+  360: 4000,
+  720: 5000,
+  1440: 6000,
+  4320: 8000,
+  10080: 10000,
+};
 
 export default function DashboardPage() {
   const { data: session } = useSession();
@@ -12,7 +33,7 @@ export default function DashboardPage() {
 
   const [duration, setDuration] = useState<Duration>(30);
   const [text, setText] = useState("");
-  const cap = useMemo(() => (duration === 30 ? 1200 : 1600), [duration]);
+  const cap = useMemo(() => PRO_CAPS[duration], [duration]);
 
   const words = useMemo(() => {
     const trimmed = text.trim();
@@ -71,7 +92,7 @@ export default function DashboardPage() {
           >
             <h2 className="text-2xl font-bold mb-4 text-black text-left">Try it Now for Free</h2>
 
-            {/* Duration pills - enabled: 30m, 1h; locked others with tooltip */}
+            {/* Duration pills - all unlocked except custom "+" */}
             <div>
               <div className="text-sm font-semibold text-black">Total Duration</div>
               <p className="text-sm text-black/70 mt-1">
@@ -79,48 +100,32 @@ export default function DashboardPage() {
               </p>
 
               <div className="mt-3 flex flex-wrap gap-2">
-                {/* 30 min */}
-                <label className="cursor-pointer">
-                  <input
-                    type="radio"
-                    name="duration"
-                    value="30"
-                    checked={duration === 30}
-                    onChange={() => setDuration(30)}
-                    className="peer sr-only"
-                  />
-                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/70 text-black/80 backdrop-blur-sm px-4 py-2 shadow-sm transition peer-checked:bg-black peer-checked:text-white peer-checked:border-black/0">
-                    30 min
-                  </span>
-                </label>
-
-                {/* 1 hr */}
-                <label className="cursor-pointer">
-                  <input
-                    type="radio"
-                    name="duration"
-                    value="60"
-                    checked={duration === 60}
-                    onChange={() => setDuration(60)}
-                    className="peer sr-only"
-                  />
-                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/70 text-black/80 backdrop-blur-sm px-4 py-2 shadow-sm transition peer-checked:bg-black peer-checked:text-white peer-checked:border-black/0">
-                    1 hr
-                  </span>
-                </label>
-
-                {/* Locked options */}
-                {["2 hrs", "6 hrs", "12 hrs", "1 day", "3 days", "1 week", "+"].map((label) => (
-                  <label key={label} className="group relative cursor-not-allowed opacity-60">
-                    <input type="radio" name="duration" disabled className="sr-only" />
-                    <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
-                      {label}
-                    </span>
-                    <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
-                      Pro only
+                {DURATIONS.map((opt) => (
+                  <label key={opt.value} className="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="duration"
+                      value={opt.value}
+                      checked={duration === opt.value}
+                      onChange={() => setDuration(opt.value)}
+                      className="peer sr-only"
+                    />
+                    <span className="inline-flex items-center rounded-full border border-black/10 bg-white/70 text-black/80 backdrop-blur-sm px-4 py-2 shadow-sm transition peer-checked:bg-black peer-checked:text-white peer-checked:border-black/0">
+                      {opt.label}
                     </span>
                   </label>
                 ))}
+
+                {/* Custom (disabled for now) */}
+                <label className="group relative cursor-not-allowed opacity-60">
+                  <input type="radio" name="duration" disabled className="sr-only" />
+                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
+                    +
+                  </span>
+                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
+                    Custom (soon)
+                  </span>
+                </label>
               </div>
             </div>
 
@@ -142,10 +147,10 @@ export default function DashboardPage() {
 
               {/* Word count + pro note */}
               <div className={`mt-2 text-xs ${over ? "text-red-500" : "text-black/70"}`}>
-                {words}/{cap} words {over && "• You’ve hit the free plan limit for this duration."}
+                {words}/{cap} words {over && "• You’re over the suggested limit for this duration."}
               </div>
               <div className="mt-1 text-xs italic text-black/60">
-                {duration === 30 ? "1,600+ words with Pro" : "2,000+ words with Pro"}
+                {PRO_CAPS[duration].toLocaleString()} words with Pro / Day Pass
               </div>
             </div>
 
