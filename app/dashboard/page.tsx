@@ -27,13 +27,37 @@ const PRO_CAPS: Record<Duration, number> = {
   10080: 10000,
 };
 
+type Plan = "dev" | "free" | "pro" | "daypass";
+
+// For development we keep everything unlocked.
+// Later, read this from the signed-in user's session.
+const PLAN: Plan = "dev";
+
+const FREE_CAPS: Record<Duration, number> = {
+  30: 1200,
+  60: 1600,
+  120: 0,
+  360: 0,
+  720: 0,
+  1440: 0,
+  4320: 0,
+  10080: 0,
+};
+
+const CAPS_BY_PLAN: Record<Plan, Record<Duration, number>> = {
+  dev: PRO_CAPS,
+  pro: PRO_CAPS,
+  daypass: PRO_CAPS,
+  free: FREE_CAPS,
+};
+
 export default function DashboardPage() {
   const { data: session } = useSession();
   const signedIn = !!session;
 
   const [duration, setDuration] = useState<Duration>(30);
   const [text, setText] = useState("");
-  const cap = useMemo(() => PRO_CAPS[duration], [duration]);
+  const cap = useMemo(() => CAPS_BY_PLAN[PLAN][duration], [duration]);
 
   const words = useMemo(() => {
     const trimmed = text.trim();
@@ -149,9 +173,11 @@ export default function DashboardPage() {
               <div className={`mt-2 text-xs ${over ? "text-red-500" : "text-black/70"}`}>
                 {words}/{cap} words {over && "• You’re over the suggested limit for this duration."}
               </div>
-              <div className="mt-1 text-xs italic text-black/60">
-                {PRO_CAPS[duration].toLocaleString()} words with Pro / Day Pass
-              </div>
+              {PLAN === "free" && (
+                <div className="mt-1 text-xs italic text-black/60">
+                  {PRO_CAPS[duration].toLocaleString()} words with Pro / Day Pass
+                </div>
+              )}
             </div>
 
             {/* Actions (solid fills) */}
