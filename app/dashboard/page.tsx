@@ -31,11 +31,11 @@ type Plan = "dev" | "free" | "pro" | "daypass";
 
 // For development we keep everything unlocked.
 // Later, read this from the signed-in user's session.
-const PLAN: Plan = "dev";
+const PLAN: Plan = "free";
 
 const FREE_CAPS: Record<Duration, number> = {
-  30: 1200,
-  60: 1600,
+  30: 1000,
+  60: 1500,
   120: 0,
   360: 0,
   720: 0,
@@ -123,38 +123,61 @@ export default function DashboardPage() {
                 Choose how long it will take for your pasted text to finish dripping into your Google Doc.
               </p>
 
-              <div className="mt-3 flex flex-wrap gap-2">
-                {DURATIONS.map((opt) => (
-                  <label key={opt.value} className="cursor-pointer">
-                    <input
-                      type="radio"
-                      name="duration"
-                      value={opt.value}
-                      checked={duration === opt.value}
-                      onChange={() => setDuration(opt.value)}
-                      className="peer sr-only"
-                    />
-                    <span className="inline-flex items-center rounded-full border border-black/10 bg-white/70 text-black/80 backdrop-blur-sm px-4 py-2 shadow-sm transition peer-checked:bg-black peer-checked:text-white peer-checked:border-black/0">
-                      {opt.label}
-                    </span>
-                  </label>
-                ))}
+              <div className="mt-3 flex flex-wrap gap-2 relative z-30">
+                {DURATIONS.map((opt) => {
+                  // Free plan gating:
+                  const isFree = PLAN === "free";
+                  const lockStarter = isFree && (opt.value === 120 || opt.value === 360 || opt.value === 720 || opt.value === 1440); // 2h..1 day
+                  const lockPro = isFree && (opt.value === 4320 || opt.value === 10080); // 3 days..1 week
+                  const locked = lockStarter || lockPro;
+
+                  if (locked) {
+                    return (
+                      <label key={opt.value} className="group relative cursor-not-allowed opacity-60 select-none" aria-disabled="true">
+                        <input type="radio" name="duration" disabled className="sr-only" />
+                        <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm cursor-not-allowed select-none">
+                          {opt.label}
+                        </span>
+                        <span className="pointer-events-none absolute left-1/2 top-full z-50 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white shadow-lg group-hover:block">
+                          Upgrade now
+                        </span>
+                      </label>
+                    );
+                  }
+
+                  // Unlocked (clickable)
+                  return (
+                    <label key={opt.value} className="cursor-pointer">
+                      <input
+                        type="radio"
+                        name="duration"
+                        value={opt.value}
+                        checked={duration === opt.value}
+                        onChange={() => setDuration(opt.value)}
+                        className="peer sr-only"
+                      />
+                      <span className="inline-flex items-center rounded-full border border-black/10 bg-white/70 text-black/80 backdrop-blur-sm px-4 py-2 shadow-sm transition cursor-pointer peer-checked:bg-black peer-checked:text-white peer-checked:border-black/0">
+                        {opt.label}
+                      </span>
+                    </label>
+                  );
+                })}
 
                 {/* Custom (disabled for now) */}
-                <label className="group relative cursor-not-allowed opacity-60">
+                <label className="group relative cursor-not-allowed opacity-60 select-none" aria-disabled="true">
                   <input type="radio" name="duration" disabled className="sr-only" />
-                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm">
+                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm cursor-not-allowed select-none">
                     +
                   </span>
-                  <span className="pointer-events-none absolute left-1/2 top-full z-10 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white group-hover:block">
-                    Custom (soon)
+                  <span className="pointer-events-none absolute left-1/2 top-full z-50 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white shadow-lg group-hover:block">
+                    Upgrade now
                   </span>
                 </label>
               </div>
             </div>
 
             {/* Textarea + counters */}
-            <div className="mt-5">
+            <div className="mt-5 relative z-10">
               <label htmlFor="prompt" className="sr-only">
                 Paste your text here…
               </label>
