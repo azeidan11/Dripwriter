@@ -27,11 +27,22 @@ const PRO_CAPS: Record<Duration, number> = {
   10080: 10000,
 };
 
-type Plan = "dev" | "free" | "pro" | "daypass";
+const STARTER_CAPS: Record<Duration, number> = {
+  30: 1500,
+  60: 2000,
+  120: 2500,
+  360: 3500,
+  720: 4000,
+  1440: 5000,
+  4320: 0,     // locked in Starter
+  10080: 0,    // locked in Starter
+};
+
+type Plan = "dev" | "free" | "starter" | "pro" | "daypass";
 
 // For development we keep everything unlocked.
 // Later, read this from the signed-in user's session.
-const PLAN: Plan = "free";
+const PLAN: Plan = "starter";
 
 const FREE_CAPS: Record<Duration, number> = {
   30: 1000,
@@ -48,6 +59,7 @@ const CAPS_BY_PLAN: Record<Plan, Record<Duration, number>> = {
   dev: PRO_CAPS,
   pro: PRO_CAPS,
   daypass: PRO_CAPS,
+  starter: STARTER_CAPS,
   free: FREE_CAPS,
 };
 
@@ -125,11 +137,16 @@ export default function DashboardPage() {
 
               <div className="mt-3 flex flex-wrap gap-2 relative z-30">
                 {DURATIONS.map((opt) => {
-                  // Free plan gating:
-                  const isFree = PLAN === "free";
-                  const lockStarter = isFree && (opt.value === 120 || opt.value === 360 || opt.value === 720 || opt.value === 1440); // 2h..1 day
-                  const lockPro = isFree && (opt.value === 4320 || opt.value === 10080); // 3 days..1 week
-                  const locked = lockStarter || lockPro;
+                  // Plan-based gating
+                  let locked = false;
+                  let tooltip = "";
+                  if (PLAN === "free") {
+                    locked = opt.value >= 120; // anything beyond 1 hr
+                    tooltip = "Upgrade now";
+                  } else if (PLAN === "starter") {
+                    locked = opt.value === 4320 || opt.value === 10080; // lock 3 days & 1 week
+                    tooltip = locked ? "Upgrade to Pro" : "";
+                  }
 
                   if (locked) {
                     return (
@@ -139,7 +156,7 @@ export default function DashboardPage() {
                           {opt.label}
                         </span>
                         <span className="pointer-events-none absolute left-1/2 top-full z-50 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white shadow-lg group-hover:block">
-                          Upgrade now
+                          {tooltip || "Upgrade now"}
                         </span>
                       </label>
                     );
@@ -199,6 +216,11 @@ export default function DashboardPage() {
               {PLAN === "free" && (
                 <div className="mt-1 text-xs italic text-black/60">
                   {PRO_CAPS[duration].toLocaleString()} words with Pro / Day Pass
+                </div>
+              )}
+              {PLAN === "starter" && (
+                <div className="mt-1 text-xs italic text-black/60">
+                  {PRO_CAPS[duration].toLocaleString()} words with Pro
                 </div>
               )}
             </div>
