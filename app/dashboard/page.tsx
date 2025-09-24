@@ -112,32 +112,41 @@ export default function DashboardPage() {
       <section className="relative mx-auto w-full px-6 md:px-8 pt-10 pb-20 lg:pl-[255px]">
         {/* Fixed left dashboard rail */}
         <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-[239px] select-none">
-          <nav className="flex-1 px-4 py-6 flex flex-col">
-            <div>
-              <div className="text-white font-extrabold drop-shadow -mb-3 text-2xl md:text-3xl">Dripwriter</div>
-              <div className="ml-[-16px] w-[239px] my-6 h-px bg-black/10" />
+          <nav className="flex-1 h-full px-4 py-6 flex flex-col">
+            <div className="min-h-0 overflow-y-auto pr-1">
+              <div>
+                <div className="text-white font-extrabold drop-shadow -mb-3 text-2xl md:text-3xl">Dripwriter</div>
+                <div className="ml-[-16px] w-[239px] my-6 h-px bg-black/10" />
+                
 
-              <ul className="-mt-3 space-y-2 text-white/90">
-                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Insert Text</button></li>
-                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Single Email</button></li>
-                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Recent</button></li>
-                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Cadence</button></li>
-                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Upgrade</button></li>
-              </ul>
-              <div className="ml-[-16px] w-[239px] my-6 h-px bg-black/10" />
+                <ul className="-mt-3 space-y-2 text-white/90">
+                  <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Insert Text</button></li>
+                  <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Single Email</button></li>
+                  <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Recent</button></li>
+                  <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Cadence</button></li>
+                  <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Upgrade</button></li>
+                </ul>
 
-              <div className="mt-4 text-xs uppercase tracking-wide text-white/70">Quick Links</div>
+                {/* keep a single visual spacer if needed; remove huge gaps */}
+                <div className="ml-[-16px] w-[239px] my-6 h-px bg-black/10" />
+              </div>
+            </div>
+
+            <div className="mt-auto pt-2">
+              {/* Top line for the bottom block */}
+              <div className="ml-[-16px] w-[239px] h-px bg-black/10" />
+
+              {/* Quick Links now lives in the bottom block */}
+              <div className="mt-3 text-xs uppercase tracking-wide text-white/70">Quick Links</div>
               <ul className="mt-2 space-y-2 text-white/90">
                 <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Changelog</button></li>
                 <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Feedback</button></li>
               </ul>
-              <div className="ml-[-16px] w-[239px] my-3 h-px bg-black/10" />
-            </div>
 
-            <div className="mt-auto space-y-3 pb-1">
-              {/* separator above My Account */}
+              {/* SINGLE shared separator between Quick Links and My Account */}
               <div className="ml-[-16px] w-[239px] my-3 h-px bg-black/10" />
 
+              {/* My Account */}
               <button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 flex items-center gap-3 text-white/90">
                 <span className="text-lg">👤</span>
                 <span className="leading-tight">
@@ -146,10 +155,11 @@ export default function DashboardPage() {
                 </span>
               </button>
 
-              {/* separator below My Account */}
+              {/* Separator below My Account */}
               <div className="ml-[-16px] w-[239px] my-3 h-px bg-black/10" />
 
-              <button className="w-[215px] h-11 mx-auto block inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-base font-lg shadow-md transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-50 bg-white text-black px-4 -mb-10 mt-2">
+              {/* Upgrade pinned at the very bottom */}
+              <button className="w-[215px] h-12 mx-auto block inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-base font-lg shadow-md transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-50 bg-white text-black px-4 mt-2">
                 {/* Left icon: arrow-up inside a circle */}
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <circle cx="12" cy="12" r="9"></circle>
@@ -158,7 +168,7 @@ export default function DashboardPage() {
                 </svg>
                 <span>Upgrade to Pro</span>
                 {/* Right chevron */}
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto">
                   <path d="m9 18 6-6-6-6" />
                 </svg>
               </button>
