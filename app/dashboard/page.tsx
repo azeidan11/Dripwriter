@@ -149,7 +149,7 @@ export default function DashboardPage() {
               {/* separator below My Account */}
               <div className="ml-[-16px] w-[239px] my-3 h-px bg-black/10" />
 
-              <button className="w-[215px] h-10 mx-auto block inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium shadow-md transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-50 bg-white text-black px-4">
+              <button className="w-[215px] h-11 mx-auto block inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-base font-lg shadow-md transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-50 bg-white text-black px-4 -mb-10 mt-2">
                 {/* Left icon: arrow-up inside a circle */}
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <circle cx="12" cy="12" r="9"></circle>
