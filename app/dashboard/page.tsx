@@ -114,28 +114,42 @@ export default function DashboardPage() {
         <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-[239px] select-none">
           <nav className="flex-1 px-4 py-6 flex flex-col">
             <div>
-              <div className="text-white font-extrabold drop-shadow mb-4 text-3xl md:text-4xl">Dripwriter</div>
-              <div className="-mx-4 my-3 h-px bg-black/10" />
+              <div className="text-white font-extrabold drop-shadow mb-4 text-2xl md:text-3xl">Dripwriter</div>
+              <div className="ml-[-16px] w-[239px] my-6 h-px bg-black/10" />
 
+              <ul className="mt-1 space-y-2 text-white/90">
+                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10">Insert Text</button></li>
+                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10">Single Email</button></li>
+                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10">Recent</button></li>
+                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10">Cadence</button></li>
+                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10">Upgrade</button></li>
+              </ul>
+              <div className="ml-[-16px] w-[239px] my-6 h-px bg-black/10" />
+
+              <div className="mt-4 text-xs uppercase tracking-wide text-white/70">Quick Links</div>
               <ul className="mt-2 space-y-2 text-white/90">
-                <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Insert Text</button></li>
-                <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Single Email</button></li>
-                <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Recent</button></li>
-                <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Cadence</button></li>
-                <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Upgrade</button></li>
+                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10">Changelog</button></li>
+                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10">Feedback</button></li>
               </ul>
-              <div className="-mx-4 my-3 h-px bg-black/10" />
-
-              <div className="mt-6 text-xs uppercase tracking-wide text-white/70">Quick Links</div>
-              <ul className="mt-3 space-y-2 text-white/90">
-                <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Changelog</button></li>
-                <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Feedback</button></li>
-              </ul>
-              <div className="-mx-4 my-3 h-px bg-black/10" />
+              <div className="ml-[-16px] w-[239px] my-3 h-px bg-black/10" />
             </div>
 
-            <div className="mt-auto pt-8">
-              <button className="w-full rounded-full bg-white text-black px-4 py-2 text-sm font-semibold hover:bg-black/10">
+            <div className="mt-auto space-y-4">
+              {/* separator above My Account */}
+              <div className="ml-[-16px] w-[239px] my-3 h-px bg-black/10" />
+
+              <button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 flex items-center gap-3 text-white/90">
+                <span className="text-lg">👤</span>
+                <span className="leading-tight">
+                  <span className="block text-white font-medium -mb-0.5">My Account</span>
+                  <span className="block text-white/70 text-xs">Free Plan</span>
+                </span>
+              </button>
+
+              {/* separator below My Account */}
+              <div className="ml-[-16px] w-[239px] my-3 h-px bg-black/10" />
+
+              <button className="w-full rounded-full bg-white text-black px-4 py-2 text-sm font-semibold hover:bg-black/10 disabled:opacity-60 disabled:cursor-not-allowed">
                 Upgrade to Pro
               </button>
             </div>
