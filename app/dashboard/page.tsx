@@ -109,26 +109,29 @@ export default function DashboardPage() {
       {/* exact landing background */}
       <div className="fixed inset-0 -z-10 bg-gradient-to-b from-[#e38db7] to-[#b35c8f]" />
 
-      <section className="relative mx-auto w-full px-6 md:px-8 pt-10 pb-20 lg:pl-[276px]">
+      <section className="relative mx-auto w-full px-6 md:px-8 pt-10 pb-20 lg:pl-[255px]">
         {/* Fixed left dashboard rail */}
-        <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-[260px] select-none">
-          <nav className="flex-1 px-4 py-6">
-            <div className="text-white/90 font-semibold mb-3 text-lg">Dripwriter</div>
-            <ul className="space-y-2 text-white/90">
-              <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Insert Text</button></li>
-              <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Single Email</button></li>
-              <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Recent</button></li>
-              <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Cadence</button></li>
-              <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Upgrade</button></li>
-            </ul>
+        <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-[239px] select-none">
+          <nav className="flex-1 px-4 py-6 flex flex-col">
+            <div>
+              <div className="text-white/90 font-semibold mb-2 text-2xl md:text-3xl">Dripwriter</div>
 
-            <div className="mt-6 text-xs uppercase tracking-wide text-white/70">Quick Links</div>
-            <ul className="mt-2 space-y-2 text-white/90">
-              <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Changelog</button></li>
-              <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Feedback</button></li>
-            </ul>
+              <ul className="mt-6 space-y-2 text-white/90">
+                <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Insert Text</button></li>
+                <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Single Email</button></li>
+                <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Recent</button></li>
+                <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Cadence</button></li>
+                <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Upgrade</button></li>
+              </ul>
 
-            <div className="mt-6">
+              <div className="mt-10 text-xs uppercase tracking-wide text-white/70">Quick Links</div>
+              <ul className="mt-3 space-y-2 text-white/90">
+                <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Changelog</button></li>
+                <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Feedback</button></li>
+              </ul>
+            </div>
+
+            <div className="mt-auto pt-8">
               <button className="w-full rounded-full bg-white text-black px-4 py-2 text-sm font-semibold hover:bg-black/10">
                 Upgrade to Pro
               </button>
@@ -137,13 +140,13 @@ export default function DashboardPage() {
         </aside>
 
         {/* Fixed vertical divider to the right of the rail */}
-        <div className="hidden lg:block fixed left-[260px] top-0 bottom-0 w-px bg-white/40" />
+        <div className="hidden lg:block fixed left-[239px] top-0 bottom-0 w-px bg-white/40" />
 
-        <div className="mx-auto max-w-7xl">
+        <div className="px-6 lg:pl-8 lg:pr-4">
           {/* Animated heading like landing */}
           <h1
             ref={ctaRef}
-            className={`text-left text-3xl md:text-4xl font-extrabold mb-4 lg:mb-6 drop-shadow transition-all duration-500 ${
+            className={`text-left text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 lg:mb-6 drop-shadow transition-all duration-500 ${
               ctaIn ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
             }`}
           >
@@ -229,7 +232,7 @@ export default function DashboardPage() {
                 disabled={!signedIn}
                 value={text}
                 onChange={(e) => handleChange(e.target.value)}
-                className={`w-full h-[28rem] rounded-xl border bg-white text-black p-4 resize-none focus:outline-none focus:ring-2 transform-gpu transition-transform duration-200 ease-out ${
+                className={`w-full h-[22rem] rounded-xl border bg-white text-black p-4 resize-none focus:outline-none focus:ring-2 transform-gpu transition-transform duration-200 ease-out ${
                   over ? "border-red-400 focus:ring-red-300" : "border-gray-300 focus:ring-pink-300"
                 }`}
                 placeholder="Paste your text here..."
