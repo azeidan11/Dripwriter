@@ -116,19 +116,53 @@ export default function DashboardPage() {
             <div className="min-h-0 overflow-y-auto pr-1">
               <div>
                 <div className="text-white font-extrabold drop-shadow -mb-3 text-2xl md:text-3xl">Dripwriter</div>
-                <div className="ml-[-16px] w-[239px] my-6 h-px bg-black/10" />
+                <div className="ml-[-20px] w-[255px] my-6 h-px bg-black/10" />
                 
 
                 <ul className="-mt-3 space-y-2 text-white/90">
-                  <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Insert Text</button></li>
-                  <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Single Email</button></li>
-                  <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Recent</button></li>
-                  <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Cadence</button></li>
-                  <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Upgrade</button></li>
+                  <li>
+                    <button className="group w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base flex items-center gap-2 cursor-pointer">
+                      <span className="truncate">Insert Text</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto h-4 w-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                        <path d="m9 18 6-6-6-6" />
+                      </svg>
+                    </button>
+                  </li>
+                  <li>
+                    <button className="group w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base flex items-center gap-2 cursor-pointer">
+                      <span className="truncate">Single Email</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto h-4 w-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                        <path d="m9 18 6-6-6-6" />
+                      </svg>
+                    </button>
+                  </li>
+                  <li>
+                    <button className="group w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base flex items-center gap-2 cursor-pointer">
+                      <span className="truncate">Recent</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto h-4 w-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                        <path d="m9 18 6-6-6-6" />
+                      </svg>
+                    </button>
+                  </li>
+                  <li>
+                    <button className="group w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base flex items-center gap-2 cursor-pointer">
+                      <span className="truncate">Cadence</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto h-4 w-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                        <path d="m9 18 6-6-6-6" />
+                      </svg>
+                    </button>
+                  </li>
+                  <li>
+                    <button className="group w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base flex items-center gap-2 cursor-pointer">
+                      <span className="truncate">Upgrade</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto h-4 w-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                        <path d="m9 18 6-6-6-6" />
+                      </svg>
+                    </button>
+                  </li>
                 </ul>
 
                 {/* keep a single visual spacer if needed; remove huge gaps */}
-                <div className="ml-[-16px] w-[239px] my-6 h-px bg-black/10" />
               </div>
             </div>
 
@@ -139,27 +173,50 @@ export default function DashboardPage() {
               {/* Quick Links now lives in the bottom block */}
               <div className="mt-3 text-xs uppercase tracking-wide text-white/70">Quick Links</div>
               <ul className="mt-2 space-y-2 text-white/90">
-                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Changelog</button></li>
-                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Feedback</button></li>
+                <li>
+                  <button className="group w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base flex items-center gap-2 cursor-pointer">
+                    <span className="truncate">Changelog</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto h-4 w-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                      <path d="m9 18 6-6-6-6" />
+                    </svg>
+                  </button>
+                </li>
+                <li>
+                  <button className="group w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base flex items-center gap-2 cursor-pointer">
+                    <span className="truncate">Feedback</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto h-4 w-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                      <path d="m9 18 6-6-6-6" />
+                    </svg>
+                  </button>
+                </li>
               </ul>
 
               {/* SINGLE shared separator between Quick Links and My Account */}
               <div className="ml-[-16px] w-[239px] my-3 h-px bg-black/10" />
 
               {/* My Account */}
-              <button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 flex items-center gap-3 text-white/90">
-                <span className="text-lg">👤</span>
+              <button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 flex items-center gap-3 text-white/90 cursor-pointer">
+                {/* Left icon: account circle */}
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <circle cx="12" cy="9.5" r="3"></circle>
+                  <path d="M6.5 18a7 7 0 0 1 11 0"></path>
+                </svg>
                 <span className="leading-tight">
                   <span className="block text-white font-medium -mb-0.5">My Account</span>
                   <span className="block text-white/70 text-xs mt-0.5">Free Plan</span>
                 </span>
+                {/* Always-visible right chevron */}
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto">
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
               </button>
 
               {/* Separator below My Account */}
               <div className="ml-[-16px] w-[239px] my-3 h-px bg-black/10" />
 
               {/* Upgrade pinned at the very bottom */}
-              <button className="w-[215px] h-12 mx-auto block inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-base font-lg shadow-md transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-50 bg-white text-black px-4 mt-2">
+              <button className="w-[215px] h-12 mx-auto block inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-base font-lg shadow-md transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-50 bg-white text-black px-4 mt-2 cursor-pointer">
                 {/* Left icon: arrow-up inside a circle */}
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <circle cx="12" cy="12" r="9"></circle>
