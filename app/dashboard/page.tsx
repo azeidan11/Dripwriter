@@ -149,8 +149,11 @@ export default function DashboardPage() {
               {/* separator below My Account */}
               <div className="ml-[-16px] w-[239px] my-3 h-px bg-black/10" />
 
-              <button className="w-full rounded-full bg-white text-black px-4 py-2 text-sm font-semibold hover:bg-black/10 disabled:opacity-60 disabled:cursor-not-allowed">
-                Upgrade to Pro
+              <button className="w-[215px] h-10 mx-auto block inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium shadow-md transition-all duration-300 hover:shadow-lg transform hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-50 bg-white text-black px-4">
+                <span>Upgrade to Pro</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto">
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
               </button>
             </div>
           </nav>
