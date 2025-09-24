@@ -114,27 +114,27 @@ export default function DashboardPage() {
         <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-[239px] select-none">
           <nav className="flex-1 px-4 py-6 flex flex-col">
             <div>
-              <div className="text-white font-extrabold drop-shadow mb-4 text-2xl md:text-3xl">Dripwriter</div>
+              <div className="text-white font-extrabold drop-shadow -mb-3 text-2xl md:text-3xl">Dripwriter</div>
               <div className="ml-[-16px] w-[239px] my-6 h-px bg-black/10" />
 
-              <ul className="mt-1 space-y-2 text-white/90">
-                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10">Insert Text</button></li>
-                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10">Single Email</button></li>
-                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10">Recent</button></li>
-                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10">Cadence</button></li>
-                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10">Upgrade</button></li>
+              <ul className="-mt-3 space-y-2 text-white/90">
+                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Insert Text</button></li>
+                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Single Email</button></li>
+                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Recent</button></li>
+                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Cadence</button></li>
+                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Upgrade</button></li>
               </ul>
               <div className="ml-[-16px] w-[239px] my-6 h-px bg-black/10" />
 
               <div className="mt-4 text-xs uppercase tracking-wide text-white/70">Quick Links</div>
               <ul className="mt-2 space-y-2 text-white/90">
-                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10">Changelog</button></li>
-                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10">Feedback</button></li>
+                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Changelog</button></li>
+                <li><button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base">Feedback</button></li>
               </ul>
               <div className="ml-[-16px] w-[239px] my-3 h-px bg-black/10" />
             </div>
 
-            <div className="mt-auto space-y-4">
+            <div className="mt-auto space-y-3 pb-1">
               {/* separator above My Account */}
               <div className="ml-[-16px] w-[239px] my-3 h-px bg-black/10" />
 
@@ -142,7 +142,7 @@ export default function DashboardPage() {
                 <span className="text-lg">👤</span>
                 <span className="leading-tight">
                   <span className="block text-white font-medium -mb-0.5">My Account</span>
-                  <span className="block text-white/70 text-xs">Free Plan</span>
+                  <span className="block text-white/70 text-xs mt-0.5">Free Plan</span>
                 </span>
               </button>
 
