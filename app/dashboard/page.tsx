@@ -114,21 +114,24 @@ export default function DashboardPage() {
         <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-[239px] select-none">
           <nav className="flex-1 px-4 py-6 flex flex-col">
             <div>
-              <div className="text-white/90 font-semibold mb-2 text-2xl md:text-3xl">Dripwriter</div>
+              <div className="text-white font-extrabold drop-shadow mb-4 text-3xl md:text-4xl">Dripwriter</div>
+              <div className="-mx-4 my-3 h-px bg-black/10" />
 
-              <ul className="mt-6 space-y-2 text-white/90">
+              <ul className="mt-2 space-y-2 text-white/90">
                 <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Insert Text</button></li>
                 <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Single Email</button></li>
                 <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Recent</button></li>
                 <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Cadence</button></li>
                 <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Upgrade</button></li>
               </ul>
+              <div className="-mx-4 my-3 h-px bg-black/10" />
 
-              <div className="mt-10 text-xs uppercase tracking-wide text-white/70">Quick Links</div>
+              <div className="mt-6 text-xs uppercase tracking-wide text-white/70">Quick Links</div>
               <ul className="mt-3 space-y-2 text-white/90">
                 <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Changelog</button></li>
                 <li><button className="w-full text-left rounded-lg px-3 py-2 hover:bg-white/10">Feedback</button></li>
               </ul>
+              <div className="-mx-4 my-3 h-px bg-black/10" />
             </div>
 
             <div className="mt-auto pt-8">
@@ -156,13 +159,11 @@ export default function DashboardPage() {
           {/* Card copied to match landing styles */}
           <div className="relative rounded-3xl border border-white/20 bg-white/80 backdrop-blur-sm shadow-lg p-6">
             <h2 className="text-2xl font-bold mb-4 text-black text-left">Select Duration</h2>
+            <p className="text-sm text-black/70 mt-2 mb-2">Choose how long the drip runs.</p>
 
             {/* Duration pills - all unlocked except custom "+" */}
             <div>
-              <div className="text-sm font-semibold text-black">Total Duration</div>
-              <p className="text-sm text-black/70 mt-1">Select how long the drip runs.</p>
-
-              <div className="mt-3 flex flex-wrap gap-2 relative z-30">
+              <div className="mt-1 flex flex-wrap gap-2 relative z-30">
                 {DURATIONS.map((opt) => {
                   // Plan-based gating
                   let locked = false;
@@ -220,7 +221,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="my-5 h-px w-full bg-black/10" />
+            <div className="my-3 h-px w-full bg-black/10" />
 
             {/* Textarea + counters */}
             <div className="mt-5 relative z-10">
@@ -232,7 +233,7 @@ export default function DashboardPage() {
                 disabled={!signedIn}
                 value={text}
                 onChange={(e) => handleChange(e.target.value)}
-                className={`w-full h-[22rem] rounded-xl border bg-white text-black p-4 resize-none focus:outline-none focus:ring-2 transform-gpu transition-transform duration-200 ease-out ${
+                className={`w-full h-[26rem] rounded-xl border bg-white text-black p-4 resize-none focus:outline-none focus:ring-2 transform-gpu transition-transform duration-200 ease-out ${
                   over ? "border-red-400 focus:ring-red-300" : "border-gray-300 focus:ring-pink-300"
                 }`}
                 placeholder="Paste your text here..."
