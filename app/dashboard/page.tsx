@@ -424,7 +424,7 @@ export default function DashboardPage() {
           {/* Card copied to match landing styles */}
           <div className="relative rounded-3xl border border-white/20 bg-white/80 backdrop-blur-sm shadow-lg p-6">
             <h2 className="text-2xl font-bold mb-4 text-black text-left">Select Duration</h2>
-            <p className="text-sm text-black/70 mt-2 mb-2">Choose how long the drip runs.</p>
+            <p className="text-sm text-black/70 -mt-1 mb-3">Choose how long the drip will run.</p>
 
             {/* Duration pills - all unlocked except custom "+" */}
             <div>
