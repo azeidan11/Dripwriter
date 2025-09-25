@@ -118,7 +118,7 @@ export default function DashboardPage() {
               <div className="ml-[-16px] w-[239px] my-6 h-px bg-black/10" />
               <ul className="mt-1 space-y-2 text-white/90">
                   <li>
-                    <button className="group w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base flex items-center gap-2 cursor-pointer">
+                    <button className="group w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base flex items-center gap-2 cursor-pointer -mt-3">
                       <span className="truncate">Insert Text</span>
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto h-4 w-4 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100">
                         <path d="m9 18 6-6-6-6" />
@@ -127,7 +127,7 @@ export default function DashboardPage() {
                   </li>
                   <li>
                     <button className="group w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base flex items-center gap-2 cursor-pointer">
-                      <span className="truncate">Single Email</span>
+                      <span className="truncate">Upload File</span>
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto h-4 w-4 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100">
                         <path d="m9 18 6-6-6-6" />
                       </svg>
@@ -135,7 +135,7 @@ export default function DashboardPage() {
                   </li>
                   <li>
                     <button className="group w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base flex items-center gap-2 cursor-pointer">
-                      <span className="truncate">Recent</span>
+                      <span className="truncate">Text Scan</span>
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto h-4 w-4 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100">
                         <path d="m9 18 6-6-6-6" />
                       </svg>
@@ -143,7 +143,7 @@ export default function DashboardPage() {
                   </li>
                   <li>
                     <button className="group w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base flex items-center gap-2 cursor-pointer">
-                      <span className="truncate">Cadence</span>
+                      <span className="truncate">Recent Drips</span>
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto h-4 w-4 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100">
                         <path d="m9 18 6-6-6-6" />
                       </svg>
