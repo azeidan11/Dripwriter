@@ -473,16 +473,33 @@ export default function DashboardPage() {
                   );
                 })}
 
-                {/* Custom (disabled for now) */}
-                <label className="group relative cursor-not-allowed opacity-60 select-none" aria-disabled="true">
-                  <input type="radio" name="duration" disabled className="sr-only" />
-                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm cursor-not-allowed select-none">
-                    +
-                  </span>
-                  <span className="pointer-events-none absolute left-1/2 top-full z-50 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white shadow-lg group-hover:block">
-                    Upgrade now
-                  </span>
-                </label>
+                {/* Custom "+" pill: unlocked for dev, disabled for others */}
+                {PLAN === "dev" ? (
+                  <label className="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="duration"
+                      value="custom"
+                      checked={false}
+                      // Optionally, implement custom logic here for "+" selection
+                      onChange={() => {/* Could show a modal or custom duration logic here */}}
+                      className="peer sr-only"
+                    />
+                    <span className="inline-flex items-center rounded-full border border-black/10 bg-white/70 text-black/80 backdrop-blur-sm px-4 py-2 shadow-sm transition cursor-pointer peer-checked:bg-black peer-checked:text-white peer-checked:border-black/0">
+                      +
+                    </span>
+                  </label>
+                ) : (
+                  <label className="group relative cursor-not-allowed opacity-60 select-none" aria-disabled="true">
+                    <input type="radio" name="duration" disabled className="sr-only" />
+                    <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm cursor-not-allowed select-none">
+                      +
+                    </span>
+                    <span className="pointer-events-none absolute left-1/2 top-full z-50 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white shadow-lg group-hover:block">
+                      Upgrade now
+                    </span>
+                  </label>
+                )}
               </div>
             </div>
 
