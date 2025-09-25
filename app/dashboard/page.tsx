@@ -112,14 +112,11 @@ export default function DashboardPage() {
       <section className="relative mx-auto w-full px-6 md:px-8 pt-10 pb-20 lg:pl-[255px]">
         {/* Fixed left dashboard rail */}
         <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-[239px] select-none">
-          <nav className="flex-1 h-full px-4 py-6 flex flex-col">
-            <div className="min-h-0 overflow-y-auto pr-1">
-              <div>
-                <div className="text-white font-extrabold drop-shadow -mb-3 text-2xl md:text-3xl">Dripwriter</div>
-                <div className="ml-[-16px] w-[239px] my-6 h-px bg-black/10" />
-                
-
-                <ul className="-mt-3 space-y-2 text-white/90">
+          <nav className="flex-1 px-4 py-6 flex flex-col">
+            <div>
+              <div className="text-white font-extrabold drop-shadow mb-4 text-2xl md:text-3xl">Dripwriter</div>
+              <div className="ml-[-16px] w-[239px] my-6 h-px bg-black/10" />
+              <ul className="mt-1 space-y-2 text-white/90">
                   <li>
                     <button className="group w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base flex items-center gap-2 cursor-pointer">
                       <span className="truncate">Insert Text</span>
@@ -161,11 +158,7 @@ export default function DashboardPage() {
                     </button>
                   </li>
                 </ul>
-
-                {/* keep a single visual spacer if needed; remove huge gaps */}
               </div>
-            </div>
-
             <div className="mt-auto pt-2">
               {/* Top line for the bottom block */}
               <div className="ml-[-16px] w-[239px] h-px bg-black/10" />
