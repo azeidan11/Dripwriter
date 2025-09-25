@@ -89,8 +89,14 @@ export default function DashboardPage() {
       ? "Browse Plans"
       : "Browse Plans";
 
+  const comingSoon = PLAN !== "dev";
+
   const [duration, setDuration] = useState<Duration>(30);
   const [text, setText] = useState("");
+  // Cursor-following tooltips for coming-soon sidebar items
+  const [uploadTip, setUploadTip] = useState<{ x: number; y: number; show: boolean }>({ x: 0, y: 0, show: false });
+  const [scanTip, setScanTip] = useState<{ x: number; y: number; show: boolean }>({ x: 0, y: 0, show: false });
+  const [recentTip, setRecentTip] = useState<{ x: number; y: number; show: boolean }>({ x: 0, y: 0, show: false });
   const cap = useMemo(() => CAPS_BY_PLAN[PLAN][duration], [duration]);
 
   const words = useMemo(() => {
@@ -155,48 +161,155 @@ export default function DashboardPage() {
                     </button>
                   </li>
                   <li>
-                    <button className="group w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base flex items-center gap-2 cursor-pointer">
-                      {/* Upload icon */}
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 flex-shrink-0">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="17 8 12 3 7 8" />
-                        <line x1="12" x2="12" y1="3" y2="15" />
-                      </svg>
-                      <span className="truncate">Upload File</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto h-4 w-4 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100">
-                        <path d="m9 18 6-6-6-6" />
-                      </svg>
-                    </button>
+                    {comingSoon ? (
+                      <div
+                        className="relative cursor-not-allowed opacity-60 select-none"
+                        aria-disabled="true"
+                        onMouseEnter={() => setUploadTip((t) => ({ ...t, show: true }))}
+                        onMouseLeave={() => setUploadTip({ x: 0, y: 0, show: false })}
+                        onMouseMove={(e) => {
+                          const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                          setUploadTip({ x: e.clientX - rect.left, y: e.clientY - rect.top, show: true });
+                        }}
+                      >
+                        <button type="button" disabled className="w-[215px] h-10 text-left rounded-lg px-3 text-base flex items-center gap-2 cursor-not-allowed select-none">
+                          {/* Upload icon */}
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 flex-shrink-0">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="17 8 12 3 7 8" />
+                            <line x1="12" x2="12" y1="3" y2="15" />
+                          </svg>
+                          <span className="truncate">Upload File</span>
+                        </button>
+                        {uploadTip.show && (
+                          <span
+                            className="pointer-events-none absolute z-50 inline-flex items-center gap-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white shadow-lg"
+                            style={{ left: uploadTip.x + 8, top: uploadTip.y + 18 }}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+                              <circle cx="12" cy="12" r="9" />
+                              <path d="m15 9-6 6" />
+                            </svg>
+                            <span>Coming soon...</span>
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <button className="group w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base flex items-center gap-2 cursor-pointer">
+                        {/* Upload icon */}
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 flex-shrink-0">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="17 8 12 3 7 8" />
+                          <line x1="12" x2="12" y1="3" y2="15" />
+                        </svg>
+                        <span className="truncate">Upload File</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto h-4 w-4 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100">
+                          <path d="m9 18 6-6-6-6" />
+                        </svg>
+                      </button>
+                    )}
                   </li>
                   <li>
-                    <button className="group w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base flex items-center gap-2 cursor-pointer">
-                      {/* Scan icon */}
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 flex-shrink-0">
-                        <path d="M3 7V5a2 2 0 0 1 2-2h2" />
-                        <path d="M17 3h2a2 2 0 0 1 2 2v2" />
-                        <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
-                        <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
-                        <rect x="7" y="8" width="10" height="8" rx="2" />
-                      </svg>
-                      <span className="truncate">Text Scan</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto h-4 w-4 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100">
-                        <path d="m9 18 6-6-6-6" />
-                      </svg>
-                    </button>
+                    {comingSoon ? (
+                      <div
+                        className="relative cursor-not-allowed opacity-60 select-none"
+                        aria-disabled="true"
+                        onMouseEnter={() => setScanTip((t) => ({ ...t, show: true }))}
+                        onMouseLeave={() => setScanTip({ x: 0, y: 0, show: false })}
+                        onMouseMove={(e) => {
+                          const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                          setScanTip({ x: e.clientX - rect.left, y: e.clientY - rect.top, show: true });
+                        }}
+                      >
+                        <button type="button" disabled className="w-[215px] h-10 text-left rounded-lg px-3 text-base flex items-center gap-2 cursor-not-allowed select-none">
+                          {/* Scan icon */}
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 flex-shrink-0">
+                            <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+                            <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+                            <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+                            <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+                            <rect x="7" y="8" width="10" height="8" rx="2" />
+                          </svg>
+                          <span className="truncate">Text Scan</span>
+                        </button>
+                        {scanTip.show && (
+                          <span
+                            className="pointer-events-none absolute z-50 inline-flex items-center gap-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white shadow-lg"
+                            style={{ left: scanTip.x + 8, top: scanTip.y + 18 }}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+                              <circle cx="12" cy="12" r="9" />
+                              <path d="m15 9-6 6" />
+                            </svg>
+                            <span>Coming soon...</span>
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <button className="group w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base flex items-center gap-2 cursor-pointer">
+                        {/* Scan icon */}
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 flex-shrink-0">
+                          <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+                          <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+                          <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+                          <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+                          <rect x="7" y="8" width="10" height="8" rx="2" />
+                        </svg>
+                        <span className="truncate">Text Scan</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto h-4 w-4 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100">
+                          <path d="m9 18 6-6-6-6" />
+                        </svg>
+                      </button>
+                    )}
                   </li>
                   <li>
-                    <button className="group w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base flex items-center gap-2 cursor-pointer">
-                      {/* Recent/History icon */}
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 flex-shrink-0">
-                        <path d="M3 3v5h5" />
-                        <path d="M3.05 13A9 9 0 1 0 8 3.46" />
-                        <path d="M12 7v5l3 3" />
-                      </svg>
-                      <span className="truncate">Recent Drips</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto h-4 w-4 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100">
-                        <path d="m9 18 6-6-6-6" />
-                      </svg>
-                    </button>
+                    {comingSoon ? (
+                      <div
+                        className="relative cursor-not-allowed opacity-60 select-none"
+                        aria-disabled="true"
+                        onMouseEnter={() => setRecentTip((t) => ({ ...t, show: true }))}
+                        onMouseLeave={() => setRecentTip({ x: 0, y: 0, show: false })}
+                        onMouseMove={(e) => {
+                          const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                          setRecentTip({ x: e.clientX - rect.left, y: e.clientY - rect.top, show: true });
+                        }}
+                      >
+                        <button type="button" disabled className="w-[215px] h-10 text-left rounded-lg px-3 text-base flex items-center gap-2 cursor-not-allowed select-none">
+                          {/* Recent/History icon */}
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 flex-shrink-0">
+                            <path d="M3 3v5h5" />
+                            <path d="M3.05 13A9 9 0 1 0 8 3.46" />
+                            <path d="M12 7v5l3 3" />
+                          </svg>
+                          <span className="truncate">Recent Drips</span>
+                        </button>
+                        {recentTip.show && (
+                          <span
+                            className="pointer-events-none absolute z-50 inline-flex items-center gap-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white shadow-lg"
+                            style={{ left: recentTip.x + 8, top: recentTip.y + 18 }}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+                              <circle cx="12" cy="12" r="9" />
+                              <path d="m15 9-6 6" />
+                            </svg>
+                            <span>Coming soon...</span>
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <button className="group w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base flex items-center gap-2 cursor-pointer">
+                        {/* Recent/History icon */}
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 flex-shrink-0">
+                          <path d="M3 3v5h5" />
+                          <path d="M3.05 13A9 9 0 1 0 8 3.46" />
+                          <path d="M12 7v5l3 3" />
+                        </svg>
+                        <span className="truncate">Recent Drips</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto h-4 w-4 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100">
+                          <path d="m9 18 6-6-6-6" />
+                        </svg>
+                      </button>
+                    )}
                   </li>
                   <li>
                     <button className="group w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 text-base flex items-center gap-2 cursor-pointer">
