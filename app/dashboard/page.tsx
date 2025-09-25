@@ -67,6 +67,28 @@ export default function DashboardPage() {
   const { data: session } = useSession();
   const signedIn = !!session;
 
+  // Normalize PLAN for UI (treat dev as pro for display)
+  const effectivePlan: Plan = PLAN === "dev" ? "pro" : PLAN;
+  const planDisplay =
+    effectivePlan === "free"
+      ? "Free Plan"
+      : effectivePlan === "starter"
+      ? "Starter Plan"
+      : effectivePlan === "pro"
+      ? "Pro Plan"
+      : effectivePlan === "daypass"
+      ? "Day Pass"
+      : String(effectivePlan);
+
+  const upgradeCta =
+    effectivePlan === "free"
+      ? "Upgrade Now"
+      : effectivePlan === "starter"
+      ? "Upgrade to Pro"
+      : effectivePlan === "pro"
+      ? "Browse Plans"
+      : "Browse Plans";
+
   const [duration, setDuration] = useState<Duration>(30);
   const [text, setText] = useState("");
   const cap = useMemo(() => CAPS_BY_PLAN[PLAN][duration], [duration]);
@@ -243,7 +265,7 @@ export default function DashboardPage() {
                 </svg>
                 <span className="leading-tight">
                   <span className="block text-white font-medium -mb-0.5">My Account</span>
-                  <span className="block text-white/70 text-xs mt-0.5">Free Plan</span>
+                  <span className="block text-white/70 text-xs mt-0.5">{planDisplay}</span>
                 </span>
                 {/* Always-visible right chevron */}
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto">
@@ -262,7 +284,7 @@ export default function DashboardPage() {
                   <path d="M12 16V8"></path>
                   <path d="m8.5 11.5 3.5-3.5 3.5 3.5"></path>
                 </svg>
-                <span>Upgrade to Pro</span>
+                <span>{upgradeCta}</span>
                 {/* Right chevron */}
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto">
                   <path d="m9 18 6-6-6-6" />
