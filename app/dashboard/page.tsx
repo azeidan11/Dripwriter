@@ -89,6 +89,15 @@ export default function DashboardPage() {
       ? "Browse Plans"
       : "Browse Plans";
 
+  // Range copy for How It Works — Step 2
+  const planMaxLabel =
+    effectivePlan === "free"
+      ? "1 hr"
+      : effectivePlan === "starter"
+      ? "1 day"
+      : "1 week"; // pro & daypass fall into "1 week"
+  const planRangeText = `30 mins up to ${planMaxLabel}`;
+
   const comingSoon = PLAN !== "dev";
 
   const [duration, setDuration] = useState<Duration>(30);
@@ -603,7 +612,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-sm uppercase tracking-wide text-white/70">Step 2</div>
                   <h3 className="mt-1 text-xl font-bold text-white">Pick a total duration</h3>
-                  <p className="mt-2 text-white/80">Choose from 30 mins up to 1 week for the drip to take place.</p>
+                  <p className="mt-2 text-white/80">{`Choose from ${planRangeText} for the drip to take place.`}</p>
                 </div>
 
                 {/* Step 3 */}
