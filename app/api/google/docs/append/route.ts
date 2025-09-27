@@ -12,8 +12,7 @@ export async function POST(req: Request) {
     }
 
     const oAuth = await getOAuthFromSession();
-    await appendAtEnd(oAuth, docId, text.startsWith(" ") ? text : " " + text);
-    return NextResponse.json({ ok: true });
+    await appendAtEnd(oAuth, docId, text);    return NextResponse.json({ ok: true });
   } catch (e: any) {
     return NextResponse.json(
       { error: e.message ?? "Append failed" },

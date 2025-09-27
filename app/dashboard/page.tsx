@@ -175,6 +175,185 @@ export default function DashboardPage() {
     }
   }
 
+  // --- Client-side drip MVP (no DB/worker yet) ---
+  type DripStatus = "idle" | "running" | "paused" | "done";
+  const [dripStatus, setDripStatus] = useState<DripStatus>("idle");
+  const statusRef = useRef<DripStatus>("idle");
+  useEffect(() => {
+    statusRef.current = dripStatus;
+  }, [dripStatus]);
+  const [dripProgress, setDripProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const idxRef = useRef<number>(0);
+  const tokensRef = useRef<string[]>([]);  // includes words and whitespace tokens (\n, spaces)
+  const totalWordsRef = useRef<number>(0); // count of non-whitespace tokens
+  const doneWordsRef = useRef<number>(0);  // how many word tokens have been appended
+  const totalMsRef = useRef<number>(0);
+  const startAtRef = useRef<number>(0);
+  const endsAtRef = useRef<number>(0);
+  const tickMs = 2000; // ~2s per tick
+
+  function stopTimer() {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }
+
+  function computeTicks(durationMinutes: number) {
+    return Math.max(1, Math.round((durationMinutes * 60) / (tickMs / 1000)));
+  }
+
+  function randInt(min: number, max: number) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  async function tickOnce() {
+    if (statusRef.current !== "running") return;
+
+    const totalWords = totalWordsRef.current;
+    const doneWords = doneWordsRef.current;
+    if (doneWords >= totalWords) {
+      setDripStatus("done");
+      stopTimer();
+      return;
+    }
+
+    // Proportional target based on elapsed time
+    const now = Date.now();
+    const elapsed = now - startAtRef.current;
+    const total = Math.max(1, totalMsRef.current);
+    let targetWords = Math.floor((totalWords * Math.min(1, elapsed / total)));
+
+    // Always kick a visible start: guarantee a few words on first tick
+    if (doneWords === 0 && targetWords === 0) targetWords = 5;
+
+    // Words to add this tick
+    let toAdd = targetWords - doneWords;
+
+    // Small human-ish jitter: +/- 2 words around target, but never below 0
+    if (toAdd <= 0) {
+      // Occasionally force a 1-word nudge so user sees progress
+      if (Math.random() < 0.2) toAdd = 1; else toAdd = 0;
+    } else {
+      toAdd += Math.floor(Math.random() * 5) - 2; // -2..+2
+      if (toAdd < 1) toAdd = 1;
+    }
+
+    // Cap per tick to avoid huge bursts
+    if (toAdd > 20) toAdd = 20;
+
+    if (toAdd === 0) {
+      setDripProgress({ done: doneWordsRef.current, total: totalWords });
+      return;
+    }
+
+    // Convert a word-count addition into a token slice that preserves whitespace
+    const tokens = tokensRef.current;
+    let endIdx = idxRef.current;
+    let remainingWords = toAdd;
+    while (endIdx < tokens.length && remainingWords > 0) {
+      if (/\S/.test(tokens[endIdx])) {
+        remainingWords -= 1; // count only non-whitespace tokens as words
+      }
+      endIdx += 1;
+    }
+
+    // If we ran out of tokens, clamp to the end
+    if (endIdx <= idxRef.current) {
+      setDripStatus("done");
+      stopTimer();
+      return;
+    }
+
+    const chunkText = tokens.slice(idxRef.current, endIdx).join(""); // join with no separator to keep original spaces/newlines
+
+    try {
+      await appendOnce(chunkText);
+      idxRef.current = endIdx;
+      doneWordsRef.current = Math.min(totalWords, doneWordsRef.current + toAdd);
+      setDripProgress({ done: doneWordsRef.current, total: totalWords });
+
+      if (doneWordsRef.current >= totalWords) {
+        setDripStatus("done");
+        stopTimer();
+      }
+    } catch (e) {
+      setConnectError((e as any)?.message || "Append failed during drip");
+      setDripStatus("paused");
+      stopTimer();
+    }
+  }
+
+  function startClientDrip() {
+    if (!signedIn) {
+      setConnectError("Sign in first");
+      return;
+    }
+    if (!docId) {
+      setConnectError("Connect or create a Google Doc first");
+      return;
+    }
+    const textTrim = text.trim();
+    if (!textTrim) {
+      setConnectError("Paste some text to drip");
+      return;
+    }
+    const normalized = textTrim.replace(/\r\n/g, "\n");
+    const tokens = normalized.match(/\S+|\s+/g) || []; // words OR whitespace
+    tokensRef.current = tokens;
+    totalWordsRef.current = tokens.filter((t) => /\S/.test(t)).length; // only non-whitespace
+    doneWordsRef.current = 0;
+
+    idxRef.current = 0;
+    setDripProgress({ done: 0, total: totalWordsRef.current });
+
+    const totalTicks = computeTicks(duration);
+    const totalMs = totalTicks * tickMs;
+    totalMsRef.current = totalMs;
+    startAtRef.current = Date.now();
+    endsAtRef.current = startAtRef.current + totalMs;
+
+    setDripStatus("running");
+    stopTimer();
+    // Kick the first tick on next macrotask to avoid stale state
+    setTimeout(() => {
+      tickOnce();
+      timerRef.current = setInterval(tickOnce, tickMs);
+    }, 0);
+  }
+
+  function pauseClientDrip() {
+    if (dripStatus !== "running") return;
+    setDripStatus("paused");
+    stopTimer();
+  }
+
+  function resumeClientDrip() {
+    if (dripStatus !== "paused") return;
+    // Recalculate endsAt to preserve remaining duration proportionally
+    const { done, total } = dripProgress;
+    const remainingFraction = total > 0 ? (total - done) / total : 0;
+    const totalTicks = computeTicks(duration);
+    const remainingTicks = Math.max(1, Math.round(totalTicks * remainingFraction));
+    endsAtRef.current = Date.now() + remainingTicks * tickMs;
+    setDripStatus("running");
+    stopTimer();
+    timerRef.current = setInterval(tickOnce, tickMs);
+  }
+
+  function cancelClientDrip() {
+    setDripStatus("idle");
+    stopTimer();
+    idxRef.current = 0;
+    tokensRef.current = [];
+    totalWordsRef.current = 0;
+    doneWordsRef.current = 0;
+    setDripProgress({ done: 0, total: 0 });
+  }
+
+  useEffect(() => () => stopTimer(), []);
+
   const words = useMemo(() => {
     const trimmed = text.trim();
     return trimmed.length ? trimmed.split(/\s+/).length : 0;
@@ -663,16 +842,61 @@ export default function DashboardPage() {
                 <div className="text-sm text-red-600">{connectError}</div>
               )}
 
-              <div className="flex items-center gap-3 pt-1">
-                <button
-                  type="button"
-                  disabled={!signedIn || !docId || appending || !text.trim()}
-                  onClick={() => appendOnce(text.trim().split(/\s+/).slice(0, 12).join(" "))}
-                  className="rounded-full bg-black text-white px-5 py-2 text-sm font-semibold hover:bg-black/90 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {appending ? "Appending…" : "Append once (test)"}
-                </button>
-                <span className="text-xs text-black/60">Appends ~10–12 words from your textarea to the end of the Doc.</span>
+              <div className="flex flex-col gap-2 pt-1">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <button
+                    type="button"
+                    disabled={!signedIn || !docId || !text.trim() || dripStatus === "running"}
+                    onClick={startClientDrip}
+                    className="rounded-full bg-black text-white px-5 py-2 text-sm font-semibold hover:bg-black/90 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    Start Dripping (client)
+                  </button>
+                  <button
+                    type="button"
+                    disabled={dripStatus !== "running"}
+                    onClick={pauseClientDrip}
+                    className="rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    Pause
+                  </button>
+                  <button
+                    type="button"
+                    disabled={dripStatus !== "paused"}
+                    onClick={resumeClientDrip}
+                    className="rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    Resume
+                  </button>
+                  <button
+                    type="button"
+                    disabled={dripStatus === "idle"}
+                    onClick={cancelClientDrip}
+                    className="rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    Cancel
+                  </button>
+
+                  {/* Keep the single-shot append for debugging */}
+                  <button
+                    type="button"
+                    disabled={!signedIn || !docId || appending || !text.trim()}
+                    onClick={() => appendOnce(text.trim().split(/\s+/).slice(0, 12).join(" "))}
+                    className="rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {appending ? "Appending…" : "Append once (test)"}
+                  </button>
+                </div>
+
+                <div className="text-xs text-black/70">
+                  Status: <span className="font-semibold">{dripStatus}</span>
+                  {dripProgress.total > 0 && (
+                    <>
+                      <span className="mx-2">•</span>
+                      {dripProgress.done}/{dripProgress.total} words (~{Math.round((dripProgress.done / Math.max(1, dripProgress.total)) * 100)}%)
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
