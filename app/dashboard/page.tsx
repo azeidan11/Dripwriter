@@ -192,6 +192,12 @@ export default function DashboardPage() {
   const startAtRef = useRef<number>(0);
   const endsAtRef = useRef<number>(0);
   const tickMs = 2000; // ~2s per tick
+  // Cadence tuning: pauses + catch-up bursts
+  const basePauseProb = 0.12;       // ~12% chance to pause on a tick
+  const lookaheadTicksBase = 8;      // allow catching up to ~16s ahead
+  const maxBurstBase = 12;           // normal per-tick upper bound (words)
+  const maxBurstCatchup = 28;        // when behind and need to catch up
+  const [timeLeftMs, setTimeLeftMs] = useState<number>(0);
 
   function stopTimer() {
     if (timerRef.current) {
@@ -219,59 +225,103 @@ export default function DashboardPage() {
       return;
     }
 
-    // Proportional target based on elapsed time
     const now = Date.now();
     const elapsed = now - startAtRef.current;
     const total = Math.max(1, totalMsRef.current);
-    let targetWords = Math.floor((totalWords * Math.min(1, elapsed / total)));
 
-    // Always kick a visible start: guarantee a few words on first tick
-    if (doneWords === 0 && targetWords === 0) targetWords = 5;
+    // Compute remaining time & ticks
+    const remainingMs = Math.max(0, endsAtRef.current - now);
+    const remainingTicks = Math.max(1, Math.round(remainingMs / tickMs));
 
-    // Words to add this tick
-    let toAdd = targetWords - doneWords;
+    // Targets
+    const currentTarget = Math.floor(totalWords * Math.min(1, elapsed / total));
+    const nextTarget = Math.floor(totalWords * Math.min(1, (elapsed + tickMs) / total));
 
-    // Small human-ish jitter: +/- 2 words around target, but never below 0
-    if (toAdd <= 0) {
-      // Occasionally force a 1-word nudge so user sees progress
-      if (Math.random() < 0.2) toAdd = 1; else toAdd = 0;
-    } else {
-      toAdd += Math.floor(Math.random() * 5) - 2; // -2..+2
-      if (toAdd < 1) toAdd = 1;
+    // Adaptive lookahead window (bigger when we have time, smaller near the end)
+    const lookaheadTicks = Math.min(remainingTicks, lookaheadTicksBase);
+    const futureTarget = Math.floor(
+      totalWords * Math.min(1, (elapsed + lookaheadTicks * tickMs) / total)
+    );
+
+    // Backlog is how many words behind current target we are
+    const backlog = Math.max(0, currentTarget - doneWords);
+
+    // Decide whether to pause this tick. Don't pause if we're too close to deadline to recover.
+    let pauseProb = basePauseProb;
+    const maxPossibleIfPause = (remainingTicks - 1) * maxBurstCatchup; // if we paused now, max we could still add in time
+    const remainingWords = totalWords - doneWords;
+    const canAffordPause = remainingWords <= maxPossibleIfPause;
+    if (!canAffordPause) pauseProb = 0; // disable pauses if we can't make it otherwise
+
+    // Bias pause probability down if we're already behind
+    if (backlog > 0) pauseProb *= 0.5;
+
+    const shouldPause = Math.random() < pauseProb && doneWords > 0; // never pause before first visible write
+
+    // Base desired increment: don't exceed a limited future target so we can catch up after a pause
+    let toAddTarget = futureTarget - doneWords;
+    if (toAddTarget < 0) toAddTarget = 0;
+
+    // Ensure we at least meet the next tick's schedule unless pausing
+    const minToMeetNext = Math.max(0, nextTarget - doneWords);
+
+    // Visible start guarantee
+    if (doneWords === 0) {
+      // kick off with a small burst (bounded by totalWords)
+      const firstBurst = Math.max(1, Math.min(8, totalWords));
+      toAddTarget = Math.max(toAddTarget, firstBurst);
     }
 
-    // Cap per tick to avoid huge bursts
-    if (toAdd > 20) toAdd = 20;
+    // If pausing this tick, do nothing
+    if (shouldPause) {
+      setDripProgress({ done: doneWordsRef.current, total: totalWords });
+      return;
+    }
+
+    // Convert target into actual toAdd with caps & a touch of jitter
+    let toAdd = toAddTarget;
+
+    // If we're not yet at next-target, ensure at least 1 word to keep momentum
+    if (toAdd < minToMeetNext) toAdd = minToMeetNext;
+
+    // Jitter +/- 2 words (not below 0)
+    toAdd += Math.floor(Math.random() * 5) - 2; // -2..+2
+    if (toAdd < 0) toAdd = 0;
+
+    // Cap bursts depending on whether we're catching up significantly
+    const isCatchingUp = backlog > 0 || remainingWords > remainingTicks * maxBurstBase;
+    const cap = isCatchingUp ? maxBurstCatchup : maxBurstBase;
+    if (toAdd > cap) toAdd = cap;
 
     if (toAdd === 0) {
       setDripProgress({ done: doneWordsRef.current, total: totalWords });
       return;
     }
 
-    // Convert a word-count addition into a token slice that preserves whitespace
+    // Build token slice preserving whitespace/newlines; count only non-whitespace tokens as words
     const tokens = tokensRef.current;
     let endIdx = idxRef.current;
-    let remainingWords = toAdd;
-    while (endIdx < tokens.length && remainingWords > 0) {
-      if (/\S/.test(tokens[endIdx])) {
-        remainingWords -= 1; // count only non-whitespace tokens as words
+    let remaining = toAdd;
+    let appendedWordCount = 0;
+    while (endIdx < tokens.length && remaining > 0) {
+      if (/\S/.test(tokens[endIdx])) { // a word token
+        remaining -= 1;
+        appendedWordCount += 1;
       }
       endIdx += 1;
     }
 
-    // If we ran out of tokens, clamp to the end
-    if (endIdx <= idxRef.current) {
-      setDripStatus("done");
-      stopTimer();
+    if (endIdx <= idxRef.current || appendedWordCount === 0) {
+      setDripProgress({ done: doneWordsRef.current, total: totalWords });
       return;
     }
 
-    const chunkText = tokens.slice(idxRef.current, endIdx).join(""); // join with no separator to keep original spaces/newlines
+    const chunkText = tokens.slice(idxRef.current, endIdx).join("");
 
     try {
       await appendOnce(chunkText);
       idxRef.current = endIdx;
-      doneWordsRef.current = Math.min(totalWords, doneWordsRef.current + toAdd);
+      doneWordsRef.current = Math.min(totalWords, doneWordsRef.current + appendedWordCount);
       setDripProgress({ done: doneWordsRef.current, total: totalWords });
 
       if (doneWordsRef.current >= totalWords) {
@@ -353,6 +403,14 @@ export default function DashboardPage() {
   }
 
   useEffect(() => () => stopTimer(), []);
+  useEffect(() => {
+    if (dripStatus !== "running") return;
+    setTimeLeftMs(Math.max(0, endsAtRef.current - Date.now()));
+    const id = setInterval(() => {
+      setTimeLeftMs(Math.max(0, endsAtRef.current - Date.now()));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [dripStatus]);
 
   const words = useMemo(() => {
     const trimmed = text.trim();
@@ -888,13 +946,19 @@ export default function DashboardPage() {
                   </button>
                 </div>
 
-                <div className="text-xs text-black/70">
-                  Status: <span className="font-semibold">{dripStatus}</span>
+                <div className="text-xs text-black/70 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span>
+                    Status: <span className="font-semibold">{dripStatus}</span>
+                  </span>
                   {dripProgress.total > 0 && (
-                    <>
-                      <span className="mx-2">•</span>
+                    <span>
                       {dripProgress.done}/{dripProgress.total} words (~{Math.round((dripProgress.done / Math.max(1, dripProgress.total)) * 100)}%)
-                    </>
+                    </span>
+                  )}
+                  {dripStatus === "running" && (
+                    <span>
+                      • ETA: {Math.max(0, Math.ceil(timeLeftMs / 1000))}s left
+                    </span>
                   )}
                 </div>
               </div>
