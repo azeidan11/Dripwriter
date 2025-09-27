@@ -63,6 +63,22 @@ const CAPS_BY_PLAN: Record<Plan, Record<Duration, number>> = {
   free: FREE_CAPS,
 };
 
+// --- Duration helpers ---
+function durationLabel(v: Duration) {
+  const m = DURATIONS.find(d => d.value === v)?.label || `${v} min`;
+  return m;
+}
+
+function nextDurationSuggestion(words: number, plan: Plan, current: Duration): Duration | null {
+  const durationsAsc = [...DURATIONS.map(d=>d.value)].sort((a,b)=>a-b) as Duration[];
+  // Find the smallest duration whose cap comfortably fits the words (~1.1x buffer)
+  const needed = Math.ceil(words * 1.1);
+  for (const d of durationsAsc) {
+    if (CAPS_BY_PLAN[plan][d] >= needed) return d;
+  }
+  return null;
+}
+
 export default function DashboardPage() {
   const { data: session } = useSession();
   const signedIn = !!session;
@@ -115,6 +131,7 @@ export default function DashboardPage() {
   const [connecting, setConnecting] = useState(false);
   const [appending, setAppending] = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
+  const [docInputOpen, setDocInputOpen] = useState(false);
 
   // Accepts full URL or raw ID
   function parseDocId(input: string): string | null {
@@ -419,7 +436,7 @@ export default function DashboardPage() {
     timerRef.current = setInterval(tickOnce, tickMs);
   }
 
-  function cancelClientDrip() {
+  function resetToIdle() {
     setDripStatus("idle");
     stopTimer();
     napRef.current = 0;
@@ -428,6 +445,10 @@ export default function DashboardPage() {
     totalWordsRef.current = 0;
     doneWordsRef.current = 0;
     setDripProgress({ done: 0, total: 0 });
+  }
+
+  function cancelClientDrip() {
+    resetToIdle();
   }
 
   useEffect(() => () => stopTimer(), []);
@@ -866,6 +887,31 @@ export default function DashboardPage() {
               <div className={`mt-2 text-xs ${over ? "text-red-500" : "text-black/70"}`}>
                 {words}/{cap} words {over && "• You’re over the suggested limit for this duration."}
               </div>
+              {/* Guidance based on words vs duration */}
+              {words > 0 && (
+                <div className="mt-1 text-xs text-black/70">
+                  {words < Math.max(1, Math.floor(cap * 0.3)) && (
+                    <span>
+                      This is a short draft for {durationLabel(duration)} — it may complete noticeably sooner.
+                    </span>
+                  )}
+                  {words >= Math.floor(cap * 0.9) && (
+                    <>
+                      <span className="text-amber-700">
+                        That’s a lot of words for {durationLabel(duration)}.
+                      </span>{" "}
+                      {(() => {
+                        const sug = nextDurationSuggestion(words, PLAN, duration);
+                        return sug && sug !== duration ? (
+                          <span>
+                            We suggest {durationLabel(sug)} for a more relaxed drip.
+                          </span>
+                        ) : null;
+                      })()}
+                    </>
+                  )}
+                </div>
+              )}
               {PLAN === "free" && (
                 <div className="mt-1 text-xs italic text-black/60">
                   {PRO_CAPS[duration].toLocaleString()} words with Pro / Day Pass
@@ -890,23 +936,37 @@ export default function DashboardPage() {
                   {connecting ? "Creating…" : "Create New Google Doc"}
                 </button>
 
+                {/* Toggleable Doc URL input */}
                 <div className="flex-1 flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={docInput}
-                    onChange={(e) => setDocInput(e.target.value)}
-                    disabled={!signedIn}
-                    placeholder="Paste Google Doc URL or ID"
-                    className="flex-1 rounded-full border border-black/10 bg-white/80 text-black px-4 py-2 text-sm placeholder-black/50 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-60"
-                  />
-                  <button
-                    type="button"
-                    disabled={!signedIn}
-                    onClick={handleUseExistingDoc}
-                    className="rounded-full bg-black text-white px-5 py-2 text-sm font-semibold hover:bg-black/90 disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    Use this Doc
-                  </button>
+                  {!docInputOpen ? (
+                    <button
+                      type="button"
+                      disabled={!signedIn}
+                      onClick={() => setDocInputOpen(true)}
+                      className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      Use existing Google Doc
+                    </button>
+                  ) : (
+                    <div className="flex-1 flex items-center gap-2 overflow-hidden">
+                      <input
+                        type="text"
+                        value={docInput}
+                        onChange={(e) => setDocInput(e.target.value)}
+                        disabled={!signedIn}
+                        placeholder="Paste Google Doc URL or ID"
+                        className="cursor-text transition-all duration-300 ease-out w-full rounded-full border border-black/10 bg-white/80 text-black px-4 py-2 text-sm placeholder-black/50 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-60"
+                      />
+                      <button
+                        type="button"
+                        disabled={!signedIn}
+                        onClick={handleUseExistingDoc}
+                        className="cursor-pointer rounded-full bg-black text-white px-5 py-2 text-sm font-semibold hover:bg-black/90 disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        Use this Doc
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -929,50 +989,65 @@ export default function DashboardPage() {
               )}
 
               <div className="flex flex-col gap-2 pt-1">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <button
-                    type="button"
-                    disabled={!signedIn || !docId || !text.trim() || dripStatus === "running"}
-                    onClick={startClientDrip}
-                    className="rounded-full bg-black text-white px-5 py-2 text-sm font-semibold hover:bg-black/90 disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    Start Dripping (client)
-                  </button>
-                  <button
-                    type="button"
-                    disabled={dripStatus !== "running"}
-                    onClick={pauseClientDrip}
-                    className="rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    Pause
-                  </button>
-                  <button
-                    type="button"
-                    disabled={dripStatus !== "paused"}
-                    onClick={resumeClientDrip}
-                    className="rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    Resume
-                  </button>
-                  <button
-                    type="button"
-                    disabled={dripStatus === "idle"}
-                    onClick={cancelClientDrip}
-                    className="rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    Cancel
-                  </button>
+                {dripStatus === "done" ? (
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-emerald-600 text-white px-4 py-2 text-sm font-semibold">
+                      ✓ Complete
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => resetToIdle()}
+                      className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5"
+                    >
+                      New drip?
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <button
+                      type="button"
+                      disabled={!signedIn || !docId || !text.trim() || dripStatus === "running"}
+                      onClick={startClientDrip}
+                      className="cursor-pointer rounded-full bg-black text-white px-5 py-2 text-sm font-semibold hover:bg-black/90 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      Start Dripping (client)
+                    </button>
+                    <button
+                      type="button"
+                      disabled={dripStatus !== "running"}
+                      onClick={pauseClientDrip}
+                      className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      Pause
+                    </button>
+                    <button
+                      type="button"
+                      disabled={dripStatus !== "paused"}
+                      onClick={resumeClientDrip}
+                      className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      Resume
+                    </button>
+                    <button
+                      type="button"
+                      disabled={dripStatus === "idle"}
+                      onClick={cancelClientDrip}
+                      className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      Cancel
+                    </button>
 
-                  {/* Keep the single-shot append for debugging */}
-                  <button
-                    type="button"
-                    disabled={!signedIn || !docId || appending || !text.trim() || dripStatus !== "idle"}
-                    onClick={() => appendOnce(text.trim().split(/\s+/).slice(0, 12).join(" "))}
-                    className="rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    {appending ? "Appending…" : "Append once (test)"}
-                  </button>
-                </div>
+                    {/* Keep the single-shot append for debugging */}
+                    <button
+                      type="button"
+                      disabled={!signedIn || !docId || appending || !text.trim() || dripStatus !== "idle"}
+                      onClick={() => appendOnce(text.trim().split(/\s+/).slice(0, 12).join(" "))}
+                      className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {appending ? "Appending…" : "Append once (test)"}
+                    </button>
+                  </div>
+                )}
 
                 <div className="text-xs text-black/70 flex flex-wrap items-center gap-x-3 gap-y-1">
                   <span>
