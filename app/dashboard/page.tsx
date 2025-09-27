@@ -197,6 +197,18 @@ export default function DashboardPage() {
   const lookaheadTicksBase = 8;      // allow catching up to ~16s ahead
   const maxBurstBase = 12;           // normal per-tick upper bound (words)
   const maxBurstCatchup = 28;        // when behind and need to catch up
+  // Long/medium nap scheduling (for visible variability)
+  const napRef = useRef<number>(0); // epoch ms; if now < napRef.current, we skip appending
+  const longNapChance = 0.05;       // 5% chance to schedule a long nap when we can afford it
+  const mediumNapChance = 0.15;     // 15% chance to schedule a medium nap when we can afford it
+  const longNapRange: [number, number] = [60_000, 180_000];   // 1–3 minutes
+  const mediumNapRange: [number, number] = [15_000, 45_000];  // 15–45 seconds
+
+  function scheduleNap(range: [number, number]) {
+    const [min, max] = range;
+    const dur = Math.floor(Math.random() * (max - min + 1)) + min;
+    napRef.current = Date.now() + dur;
+  }
   const [timeLeftMs, setTimeLeftMs] = useState<number>(0);
 
   function stopTimer() {
@@ -229,6 +241,12 @@ export default function DashboardPage() {
     const elapsed = now - startAtRef.current;
     const total = Math.max(1, totalMsRef.current);
 
+    // If we're in a scheduled nap window, just update progress/ETA and bail
+    if (napRef.current && now < napRef.current) {
+      setDripProgress({ done: doneWordsRef.current, total: totalWords });
+      return;
+    }
+
     // Compute remaining time & ticks
     const remainingMs = Math.max(0, endsAtRef.current - now);
     const remainingTicks = Math.max(1, Math.round(remainingMs / tickMs));
@@ -243,54 +261,62 @@ export default function DashboardPage() {
       totalWords * Math.min(1, (elapsed + lookaheadTicks * tickMs) / total)
     );
 
-    // Backlog is how many words behind current target we are
+    const remainingWords = totalWords - doneWords;
     const backlog = Math.max(0, currentTarget - doneWords);
 
-    // Decide whether to pause this tick. Don't pause if we're too close to deadline to recover.
-    let pauseProb = basePauseProb;
-    const maxPossibleIfPause = (remainingTicks - 1) * maxBurstCatchup; // if we paused now, max we could still add in time
-    const remainingWords = totalWords - doneWords;
-    const canAffordPause = remainingWords <= maxPossibleIfPause;
-    if (!canAffordPause) pauseProb = 0; // disable pauses if we can't make it otherwise
+    // Decide whether we can afford a nap (ensure we can still finish with catch-up caps)
+    const maxPerTickNormal = maxBurstBase;
+    const maxPerTickCatchup = maxBurstCatchup;
+    const maxPossibleNoNap = remainingTicks * maxPerTickCatchup;
+    const canAffordAnyNap = remainingWords <= maxPossibleNoNap;
 
-    // Bias pause probability down if we're already behind
-    if (backlog > 0) pauseProb *= 0.5;
+    // On some ticks, schedule a longer nap *if we can afford it*
+    if (canAffordAnyNap && doneWords > 0) {
+      // Prefer long naps earlier in the run, medium naps later
+      const elapsedPct = elapsed / total;
+      const tryLong = Math.random() < longNapChance * (1 - elapsedPct); // more likely early
+      const tryMedium = Math.random() < mediumNapChance * (0.5 + 0.5 * elapsedPct); // more likely mid/late
+      if (tryLong) {
+        scheduleNap(longNapRange);
+        setDripProgress({ done: doneWordsRef.current, total: totalWords });
+        return;
+      }
+      if (tryMedium) {
+        scheduleNap(mediumNapRange);
+        setDripProgress({ done: doneWordsRef.current, total: totalWords });
+        return;
+      }
+    }
 
-    const shouldPause = Math.random() < pauseProb && doneWords > 0; // never pause before first visible write
+    // Base desired increment: don't exceed a limited future target so we can catch up after naps
+    let toAddTarget = Math.max(0, futureTarget - doneWords);
 
-    // Base desired increment: don't exceed a limited future target so we can catch up after a pause
-    let toAddTarget = futureTarget - doneWords;
-    if (toAddTarget < 0) toAddTarget = 0;
-
-    // Ensure we at least meet the next tick's schedule unless pausing
+    // Ensure we at least meet the next tick's schedule
     const minToMeetNext = Math.max(0, nextTarget - doneWords);
 
     // Visible start guarantee
     if (doneWords === 0) {
-      // kick off with a small burst (bounded by totalWords)
-      const firstBurst = Math.max(1, Math.min(8, totalWords));
+      const firstBurst = Math.max(1, Math.min(12, totalWords));
       toAddTarget = Math.max(toAddTarget, firstBurst);
     }
 
-    // If pausing this tick, do nothing
-    if (shouldPause) {
-      setDripProgress({ done: doneWordsRef.current, total: totalWords });
-      return;
+    // If we're at or above current target, allow aiming toward next target
+    if (toAddTarget < minToMeetNext) toAddTarget = minToMeetNext;
+
+    // If we're very close to deadline, guarantee finish: dump remaining words on the last tick
+    if (remainingTicks <= 1) {
+      toAddTarget = remainingWords;
     }
 
-    // Convert target into actual toAdd with caps & a touch of jitter
-    let toAdd = toAddTarget;
-
-    // If we're not yet at next-target, ensure at least 1 word to keep momentum
-    if (toAdd < minToMeetNext) toAdd = minToMeetNext;
-
-    // Jitter +/- 2 words (not below 0)
-    toAdd += Math.floor(Math.random() * 5) - 2; // -2..+2
+    // Jitter +/- 2 words
+    let toAdd = toAddTarget + (Math.floor(Math.random() * 5) - 2);
     if (toAdd < 0) toAdd = 0;
 
     // Cap bursts depending on whether we're catching up significantly
-    const isCatchingUp = backlog > 0 || remainingWords > remainingTicks * maxBurstBase;
-    const cap = isCatchingUp ? maxBurstCatchup : maxBurstBase;
+    const capacityNormal = remainingTicks * maxPerTickNormal;
+    const isCatchingUp = backlog > 0 || remainingWords > capacityNormal;
+
+    const cap = isCatchingUp ? maxPerTickCatchup : maxPerTickNormal;
     if (toAdd > cap) toAdd = cap;
 
     if (toAdd === 0) {
@@ -304,7 +330,7 @@ export default function DashboardPage() {
     let remaining = toAdd;
     let appendedWordCount = 0;
     while (endIdx < tokens.length && remaining > 0) {
-      if (/\S/.test(tokens[endIdx])) { // a word token
+      if (/\S/.test(tokens[endIdx])) {
         remaining -= 1;
         appendedWordCount += 1;
       }
@@ -364,6 +390,7 @@ export default function DashboardPage() {
     startAtRef.current = Date.now();
     endsAtRef.current = startAtRef.current + totalMs;
 
+    napRef.current = 0; // clear any scheduled nap
     setDripStatus("running");
     stopTimer();
     // Kick the first tick on next macrotask to avoid stale state
@@ -395,6 +422,7 @@ export default function DashboardPage() {
   function cancelClientDrip() {
     setDripStatus("idle");
     stopTimer();
+    napRef.current = 0;
     idxRef.current = 0;
     tokensRef.current = [];
     totalWordsRef.current = 0;
@@ -938,7 +966,7 @@ export default function DashboardPage() {
                   {/* Keep the single-shot append for debugging */}
                   <button
                     type="button"
-                    disabled={!signedIn || !docId || appending || !text.trim()}
+                    disabled={!signedIn || !docId || appending || !text.trim() || dripStatus !== "idle"}
                     onClick={() => appendOnce(text.trim().split(/\s+/).slice(0, 12).join(" "))}
                     className="rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
