@@ -573,61 +573,52 @@ export default function DashboardPage() {
           </div>
 
           {/* How it works */}
-          <section aria-labelledby="how-it-works" className="mt-10">
-            <h2 id="how-it-works" className="text-3xl font-bold mb-4 text-white drop-shadow">How it works</h2>
+          <section id="how" className="mt-10">
+            <div className="rounded-3xl border border-white/20 bg-white/10 backdrop-blur-md shadow-lg p-6 md:p-8">
+              <h2 className="text-left text-3xl md:text-4xl font-extrabold mb-7 text-white drop-shadow">How It Works</h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Step 1 */}
-              <div className="rounded-3xl border border-white/20 bg-white/10 backdrop-blur-md shadow-lg p-6">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/30 bg-white/10">
-                  {/* Paste icon */}
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7 text-white">
-                    <rect x="3" y="4" width="18" height="14" rx="2" />
-                    <path d="M8 2h8v4H8z" />
-                  </svg>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+                {/* Step 1 */}
+                <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 text-center">
+                  <div className="mx-auto mb-4 size-14 md:size-16 rounded-2xl grid place-items-center border border-white/20 bg-white/10">
+                    {/* Paste icon (updated path) */}
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7 md:h-8 md:w-8 text-white/90">
+                      <path d="M9 2a2 2 0 0 0-2 2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6v-2H6V6h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V6h1v4h2V6a2 2 0 0 0-2-2h-1a2 2 0 0 0-2-2H9Zm0 2h6v3H9V4Z"/>
+                    </svg>
+                  </div>
+                  <div className="text-sm uppercase tracking-wide text-white/70">Step 1</div>
+                  <h3 className="mt-1 text-xl font-bold text-white">Paste your draft</h3>
+                  <p className="mt-2 text-white/80">Drop your text into the box or paste it from anywhere.</p>
                 </div>
-                <div className="text-center text-white">
-                  <div className="text-xs tracking-wide uppercase text-white/80">Step 1</div>
-                  <div className="mt-1 text-2xl font-extrabold">Paste your draft</div>
-                  <p className="mt-3 text-sm text-white/90">
-                    Drop your text into the box or paste it from anywhere.
-                  </p>
-                </div>
-              </div>
 
-              {/* Step 2 */}
-              <div className="rounded-3xl border border-white/20 bg-white/10 backdrop-blur-md shadow-lg p-6">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/30 bg-white/10">
-                  {/* Clock icon */}
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7 text-white">
-                    <circle cx="12" cy="12" r="9" />
-                    <path d="M12 7v5l3 3" />
-                  </svg>
+                {/* Step 2 */}
+                <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 text-center">
+                  <div className="mx-auto mb-4 size-14 md:size-16 rounded-2xl grid place-items-center border border-white/20 bg-white/10">
+                    {/* Duration/clock icon (stroke variant) */}
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-7 w-7 md:h-8 md:w-8 text-white">
+                      <circle cx="12" cy="12" r="9" />
+                      <line x1="12" y1="12" x2="12" y2="7" />
+                      <line x1="12" y1="12" x2="15" y2="12" />
+                    </svg>
+                  </div>
+                  <div className="text-sm uppercase tracking-wide text-white/70">Step 2</div>
+                  <h3 className="mt-1 text-xl font-bold text-white">Pick a total duration</h3>
+                  <p className="mt-2 text-white/80">Choose from 30 mins up to 1 week for the drip to take place.</p>
                 </div>
-                <div className="text-center text-white">
-                  <div className="text-xs tracking-wide uppercase text-white/80">Step 2</div>
-                  <div className="mt-1 text-2xl font-extrabold">Pick a total duration</div>
-                  <p className="mt-3 text-sm text-white/90">
-                    Choose 30 min or 1 hr in the Free plan (more with Pro).
-                  </p>
-                </div>
-              </div>
 
-              {/* Step 3 */}
-              <div className="rounded-3xl border border-white/20 bg-white/10 backdrop-blur-md shadow-lg p-6">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/30 bg-white/10">
-                  {/* Doc icon */}
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7 text-white">
-                    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-                    <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-                  </svg>
-                </div>
-                <div className="text-center text-white">
-                  <div className="text-xs tracking-wide uppercase text-white/80">Step 3</div>
-                  <div className="mt-1 text-2xl font-extrabold">Watch it drip into Docs</div>
-                  <p className="mt-3 text-sm text-white/90">
-                    We type it in on a schedule with natural edits and pauses.
-                  </p>
+                {/* Step 3 */}
+                <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 text-center">
+                  <div className="mx-auto mb-4 size-14 md:size-16 rounded-2xl grid place-items-center border border-white/20 bg-white/10">
+                    {/* Google Doc icon (image) */}
+                    <img
+                      src="/google-docs.png"
+                      alt="Google Docs Icon"
+                      className="h-7 w-7 md:h-8 md:w-8 object-contain"
+                    />
+                  </div>
+                  <div className="text-sm uppercase tracking-wide text-white/70">Step 3</div>
+                  <h3 className="mt-1 text-xl font-bold text-white">Watch it drip into Docs</h3>
+                  <p className="mt-2 text-white/80">We type it in on a schedule with natural edits and pauses.</p>
                 </div>
               </div>
             </div>
