@@ -108,6 +108,73 @@ export default function DashboardPage() {
   const [recentTip, setRecentTip] = useState<{ x: number; y: number; show: boolean }>({ x: 0, y: 0, show: false });
   const cap = useMemo(() => CAPS_BY_PLAN[PLAN][duration], [duration]);
 
+  // --- Google Doc connect (no DB) ---
+  const [docId, setDocId] = useState<string | null>(null);
+  const [docUrl, setDocUrl] = useState<string | null>(null);
+  const [docInput, setDocInput] = useState<string>("");
+  const [connecting, setConnecting] = useState(false);
+  const [appending, setAppending] = useState(false);
+  const [connectError, setConnectError] = useState<string | null>(null);
+
+  // Accepts full URL or raw ID
+  function parseDocId(input: string): string | null {
+    const raw = input.trim();
+    if (!raw) return null;
+    // Raw ID (common Google Doc IDs are 20+ URL-safe chars)
+    if (/^[a-zA-Z0-9_-]{20,}$/.test(raw) && !raw.includes("http")) return raw;
+    // Typical URL formats
+    const m = raw.match(/\/document\/d\/([a-zA-Z0-9_-]+)/) || raw.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    return m ? m[1] : null;
+  }
+
+  async function handleCreateDoc() {
+    try {
+      setConnecting(true);
+      setConnectError(null);
+      const res = await fetch("/api/google/docs/create", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create doc");
+      setDocId(data.docId);
+      setDocUrl(data.url);
+    } catch (e: any) {
+      setConnectError(e.message || "Could not create doc");
+    } finally {
+      setConnecting(false);
+    }
+  }
+
+  async function handleUseExistingDoc() {
+    setConnectError(null);
+    const id = parseDocId(docInput);
+    if (!id) {
+      setConnectError("Paste a valid Google Doc link or ID");
+      return;
+    }
+    setDocId(id);
+    setDocUrl(`https://docs.google.com/document/d/${id}/edit`);
+  }
+
+  async function appendOnce(textChunk: string) {
+    if (!docId) {
+      setConnectError("Connect or create a Google Doc first");
+      return;
+    }
+    try {
+      setAppending(true);
+      const res = await fetch("/api/google/docs/append", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ docId, text: textChunk })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Append failed");
+    } catch (e: any) {
+      setConnectError(e.message || "Append failed");
+    } finally {
+      setAppending(false);
+    }
+  }
+
   const words = useMemo(() => {
     const trimmed = text.trim();
     return trimmed.length ? trimmed.split(/\s+/).length : 0;
@@ -546,22 +613,67 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* Actions (solid fills) */}
-            <div className="mt-6 flex items-center gap-3">
-              <button
-                type="button"
-                disabled={!signedIn}
-                className="rounded-full bg-black text-white px-5 py-2 text-sm font-semibold hover:bg-black/90 disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                Start Dripping (mock)
-              </button>
-              <button
-                type="button"
-                disabled={!signedIn}
-                className="rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                Connect Google Doc
-              </button>
+            {/* Actions (connect + quick test) */}
+            <div className="mt-6 space-y-3">
+              <div className="flex flex-col md:flex-row md:items-center gap-3">
+                <button
+                  type="button"
+                  disabled={!signedIn || connecting}
+                  onClick={handleCreateDoc}
+                  className="rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {connecting ? "Creating…" : "Create New Google Doc"}
+                </button>
+
+                <div className="flex-1 flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={docInput}
+                    onChange={(e) => setDocInput(e.target.value)}
+                    disabled={!signedIn}
+                    placeholder="Paste Google Doc URL or ID"
+                    className="flex-1 rounded-full border border-black/10 bg-white/80 text-black px-4 py-2 text-sm placeholder-black/50 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-60"
+                  />
+                  <button
+                    type="button"
+                    disabled={!signedIn}
+                    onClick={handleUseExistingDoc}
+                    className="rounded-full bg-black text-white px-5 py-2 text-sm font-semibold hover:bg-black/90 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    Use this Doc
+                  </button>
+                </div>
+              </div>
+
+              {docUrl && (
+                <div className="text-sm text-black/80 flex items-center gap-3">
+                  <span className="inline-flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                      <path d="M9 12h6"/>
+                      <path d="M12 9v6"/>
+                    </svg>
+                    <span className="font-medium">Connected Doc:</span>
+                  </span>
+                  <a href={docUrl} target="_blank" rel="noreferrer" className="underline">Open in Google Docs</a>
+                  {docId && <span className="text-xs text-black/60">(ID: {docId})</span>}
+                </div>
+              )}
+
+              {connectError && (
+                <div className="text-sm text-red-600">{connectError}</div>
+              )}
+
+              <div className="flex items-center gap-3 pt-1">
+                <button
+                  type="button"
+                  disabled={!signedIn || !docId || appending || !text.trim()}
+                  onClick={() => appendOnce(text.trim().split(/\s+/).slice(0, 12).join(" "))}
+                  className="rounded-full bg-black text-white px-5 py-2 text-sm font-semibold hover:bg-black/90 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {appending ? "Appending…" : "Append once (test)"}
+                </button>
+                <span className="text-xs text-black/60">Appends ~10–12 words from your textarea to the end of the Doc.</span>
+              </div>
             </div>
 
             {/* Signed-out overlay (locks the editor, identical placement) */}
