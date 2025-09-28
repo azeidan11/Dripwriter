@@ -71,9 +71,9 @@ function durationLabel(v: Duration) {
 
 function nextDurationSuggestion(words: number, plan: Plan, current: Duration): Duration | null {
   const durationsAsc = [...DURATIONS.map(d=>d.value)].sort((a,b)=>a-b) as Duration[];
-  // Find the smallest duration whose cap comfortably fits the words (~1.1x buffer)
   const needed = Math.ceil(words * 1.1);
   for (const d of durationsAsc) {
+    if (d <= current) continue; // only suggest longer than current
     if (CAPS_BY_PLAN[plan][d] >= needed) return d;
   }
   return null;
@@ -132,6 +132,7 @@ export default function DashboardPage() {
   const [appending, setAppending] = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
   const [docInputOpen, setDocInputOpen] = useState(false);
+  const [usedDocLocked, setUsedDocLocked] = useState(false);
 
   // Accepts full URL or raw ID
   function parseDocId(input: string): string | null {
@@ -169,6 +170,7 @@ export default function DashboardPage() {
     }
     setDocId(id);
     setDocUrl(`https://docs.google.com/document/d/${id}/edit`);
+    setUsedDocLocked(true);
   }
 
   async function appendOnce(textChunk: string) {
@@ -887,29 +889,32 @@ export default function DashboardPage() {
               <div className={`mt-2 text-xs ${over ? "text-red-500" : "text-black/70"}`}>
                 {words}/{cap} words {over && "• You’re over the suggested limit for this duration."}
               </div>
-              {/* Guidance based on words vs duration */}
+              {/* Guidance based on words vs duration (proportional thresholds) */}
               {words > 0 && (
                 <div className="mt-1 text-xs text-black/70">
-                  {words < Math.max(1, Math.floor(cap * 0.3)) && (
-                    <span>
-                      This is a short draft for {durationLabel(duration)} — it may complete noticeably sooner.
-                    </span>
-                  )}
-                  {words >= Math.floor(cap * 0.9) && (
-                    <>
-                      <span className="text-amber-700">
-                        That’s a lot of words for {durationLabel(duration)}.
-                      </span>{" "}
-                      {(() => {
-                        const sug = nextDurationSuggestion(words, PLAN, duration);
-                        return sug && sug !== duration ? (
-                          <span>
-                            We suggest {durationLabel(sug)} for a more relaxed drip.
-                          </span>
-                        ) : null;
-                      })()}
-                    </>
-                  )}
+                  {(() => {
+                    const shortThresh = Math.max(1, Math.floor(cap * 0.175)); // ~350 for 30min dev cap 2000
+                    const heavyThresh = Math.max(1, Math.floor(cap * 0.325)); // ~650 for 30min dev cap 2000
+                    if (words < shortThresh) {
+                      return (
+                        <span>
+                          This is a short draft for {durationLabel(duration)} — it may complete noticeably sooner.
+                        </span>
+                      );
+                    }
+                    if (words >= heavyThresh) {
+                      const sug = nextDurationSuggestion(words, PLAN, duration);
+                      return (
+                        <>
+                          <span className="text-amber-700">That’s a lot of words for {durationLabel(duration)}.</span>{' '}
+                          {sug && sug !== duration ? (
+                            <span>We suggest {durationLabel(sug)} for a more relaxed drip.</span>
+                          ) : null}
+                        </>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
               )}
               {PLAN === "free" && (
@@ -936,32 +941,32 @@ export default function DashboardPage() {
                   {connecting ? "Creating…" : "Create New Google Doc"}
                 </button>
 
-                {/* Toggleable Doc URL input */}
+                {/* Toggleable Doc URL input with left→right reveal */}
                 <div className="flex-1 flex items-center gap-2">
                   {!docInputOpen ? (
                     <button
                       type="button"
                       disabled={!signedIn}
-                      onClick={() => setDocInputOpen(true)}
-                      className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
+                      onClick={() => { setDocInputOpen(true); setUsedDocLocked(false); }}
+                      className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
                     >
                       Use existing Google Doc
                     </button>
                   ) : (
-                    <div className="flex-1 flex items-center gap-2 overflow-hidden">
+                    <div className={`flex-1 flex items-center gap-2 overflow-hidden transform-gpu origin-left transition-transform duration-500 ${docInputOpen ? 'scale-x-100' : 'scale-x-0'}`}>
                       <input
                         type="text"
                         value={docInput}
-                        onChange={(e) => setDocInput(e.target.value)}
-                        disabled={!signedIn}
+                        onChange={(e) => { setDocInput(e.target.value); setUsedDocLocked(false); }}
+                        disabled={!signedIn || usedDocLocked}
                         placeholder="Paste Google Doc URL or ID"
-                        className="cursor-text transition-all duration-300 ease-out w-full rounded-full border border-black/10 bg-white/80 text-black px-4 py-2 text-sm placeholder-black/50 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-60"
+                        className="cursor-text w-full rounded-full border border-black/10 bg-white/80 text-black px-4 py-2 text-sm placeholder-black/50 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-60"
                       />
                       <button
                         type="button"
-                        disabled={!signedIn}
+                        disabled={!signedIn || usedDocLocked}
                         onClick={handleUseExistingDoc}
-                        className="cursor-pointer rounded-full bg-black text-white px-5 py-2 text-sm font-semibold hover:bg-black/90 disabled:opacity-60 disabled:cursor-not-allowed"
+                        className={`rounded-full px-5 py-2 text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap ${usedDocLocked ? 'bg-black/30 text-white cursor-not-allowed' : 'bg-black text-white hover:bg-black/90 cursor-pointer'}`}
                       >
                         Use this Doc
                       </button>
@@ -1004,48 +1009,65 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-3 flex-wrap">
-                    <button
-                      type="button"
-                      disabled={!signedIn || !docId || !text.trim() || dripStatus === "running"}
-                      onClick={startClientDrip}
-                      className="cursor-pointer rounded-full bg-black text-white px-5 py-2 text-sm font-semibold hover:bg-black/90 disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      Start Dripping (client)
-                    </button>
-                    <button
-                      type="button"
-                      disabled={dripStatus !== "running"}
-                      onClick={pauseClientDrip}
-                      className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      Pause
-                    </button>
-                    <button
-                      type="button"
-                      disabled={dripStatus !== "paused"}
-                      onClick={resumeClientDrip}
-                      className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      Resume
-                    </button>
-                    <button
-                      type="button"
-                      disabled={dripStatus === "idle"}
-                      onClick={cancelClientDrip}
-                      className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      Cancel
-                    </button>
+                    {dripStatus === 'idle' && (
+                      <>
+                        <button
+                          type="button"
+                          disabled={!signedIn || !docId || !text.trim()}
+                          onClick={startClientDrip}
+                          className="cursor-pointer rounded-full bg-black text-white px-5 py-2 text-sm font-semibold hover:bg-black/90 disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          Start Dripping (client)
+                        </button>
+                        {/* Keep the single-shot append for debugging */}
+                        <button
+                          type="button"
+                          disabled={!signedIn || !docId || appending || !text.trim()}
+                          onClick={() => appendOnce(text.trim().split(/\s+/).slice(0, 12).join(" "))}
+                          className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
+                        >
+                          {appending ? "Appending…" : "Append once (test)"}
+                        </button>
+                      </>
+                    )}
 
-                    {/* Keep the single-shot append for debugging */}
-                    <button
-                      type="button"
-                      disabled={!signedIn || !docId || appending || !text.trim() || dripStatus !== "idle"}
-                      onClick={() => appendOnce(text.trim().split(/\s+/).slice(0, 12).join(" "))}
-                      className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      {appending ? "Appending…" : "Append once (test)"}
-                    </button>
+                    {dripStatus === 'running' && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={pauseClientDrip}
+                          className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5"
+                        >
+                          Pause
+                        </button>
+                        <button
+                          type="button"
+                          onClick={cancelClientDrip}
+                          className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    )}
+
+                    {dripStatus === 'paused' && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={resumeClientDrip}
+                          className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5"
+                        >
+                          Resume
+                        </button>
+                        <button
+                          type="button"
+                          onClick={cancelClientDrip}
+                          className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
 
