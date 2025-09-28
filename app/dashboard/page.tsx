@@ -942,37 +942,37 @@ export default function DashboardPage() {
                 </button>
 
                 {/* Toggleable Doc URL input with left→right reveal */}
-                <div className="flex-1 flex items-center gap-2">
+              <div className="flex-1 flex items-center gap-2">
                   {!docInputOpen ? (
-                    <button
-                      type="button"
-                      disabled={!signedIn}
-                      onClick={() => { setDocInputOpen(true); setUsedDocLocked(false); }}
+                <button
+                  type="button"
+                  disabled={!signedIn}
+                  onClick={() => { setDocInputOpen(true); setUsedDocLocked(false); }}
                       className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
-                    >
-                      Use existing Google Doc
-                    </button>
+                >
+                  Use existing Google Doc
+                </button>
                   ) : (
                     <div className={`flex-1 flex items-center gap-2 overflow-hidden transform-gpu origin-left transition-transform duration-500 ${docInputOpen ? 'scale-x-100' : 'scale-x-0'}`}>
-                      <input
-                        type="text"
-                        value={docInput}
-                        onChange={(e) => { setDocInput(e.target.value); setUsedDocLocked(false); }}
-                        disabled={!signedIn || usedDocLocked}
-                        placeholder="Paste Google Doc URL or ID"
+                    <input
+                      type="text"
+                      value={docInput}
+                      onChange={(e) => { setDocInput(e.target.value); setUsedDocLocked(false); }}
+                      disabled={!signedIn || usedDocLocked}
+                      placeholder="Paste Google Doc URL or ID"
                         className="cursor-text w-full rounded-full border border-black/10 bg-white/80 text-black px-4 py-2 text-sm placeholder-black/50 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-60"
-                      />
-                      <button
-                        type="button"
-                        disabled={!signedIn || usedDocLocked}
-                        onClick={handleUseExistingDoc}
-                        className={`rounded-full px-5 py-2 text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap ${usedDocLocked ? 'bg-black/30 text-white cursor-not-allowed' : 'bg-black text-white hover:bg-black/90 cursor-pointer'}`}
-                      >
-                        Use this Doc
-                      </button>
-                    </div>
+                    />
+                    <button
+                      type="button"
+                      disabled={!signedIn || usedDocLocked}
+                      onClick={handleUseExistingDoc}
+                      className={`rounded-full px-5 py-2 text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap ${usedDocLocked ? 'bg-black/30 text-white cursor-not-allowed' : 'bg-black text-white hover:bg-black/90 cursor-pointer'}`}
+                    >
+                      Use this Doc
+                    </button>
+                  </div>
                   )}
-                </div>
+              </div>
               </div>
 
               {docUrl && (
