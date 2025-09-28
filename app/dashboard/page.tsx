@@ -447,6 +447,12 @@ export default function DashboardPage() {
     totalWordsRef.current = 0;
     doneWordsRef.current = 0;
     setDripProgress({ done: 0, total: 0 });
+    // Reset doc selection UI but keep the user's text in the textarea
+    setDocId(null);
+    setDocUrl(null);
+    setDocInput("");
+    setDocInputOpen(false);
+    setUsedDocLocked(false);
   }
 
   function cancelClientDrip() {
@@ -986,6 +992,15 @@ export default function DashboardPage() {
                   </span>
                   <a href={docUrl} target="_blank" rel="noreferrer" className="underline">Open in Google Docs</a>
                   {docId && <span className="text-xs text-black/60">(ID: {docId})</span>}
+                  {usedDocLocked && dripStatus === 'idle' && !docInputOpen && (
+                    <button
+                      type="button"
+                      onClick={() => { setDocInputOpen(true); setUsedDocLocked(false); }}
+                      className="underline text-black/80 hover:text-black cursor-pointer"
+                    >
+                      Edit Link
+                    </button>
+                  )}
                 </div>
               )}
 
