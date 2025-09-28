@@ -171,6 +171,7 @@ export default function DashboardPage() {
     setDocId(id);
     setDocUrl(`https://docs.google.com/document/d/${id}/edit`);
     setUsedDocLocked(true);
+    // Keep the textbox + button visible, just locked
   }
 
   async function appendOnce(textChunk: string) {
@@ -1001,15 +1002,19 @@ export default function DashboardPage() {
                     <span className="font-medium">Connected Doc:</span>
                   </span>
                   <a href={docUrl} target="_blank" rel="noreferrer" className="underline">Open in Google Docs</a>
-                  {docId && <span className="text-xs text-black/60">(ID: {docId})</span>}
-                  {usedDocLocked && dripStatus === 'idle' && !docInputOpen && (
-                    <button
-                      type="button"
-                      onClick={() => { setDocInputOpen(true); setUsedDocLocked(false); }}
-                      className="underline text-black/80 hover:text-black cursor-pointer"
-                    >
-                      Edit Link
-                    </button>
+                  {docId && (
+                    <span className="inline-flex items-center gap-1">
+                      <span className="text-xs text-black/60">(ID: {docId})</span>
+                      {usedDocLocked && dripStatus === 'idle' && (
+                        <button
+                          type="button"
+                          onClick={() => { setUsedDocLocked(false); /* textbox/button remain visible; just unlock */ }}
+                          className="underline text-black/80 hover:text-black cursor-pointer text-xs"
+                        >
+                          Edit Link
+                        </button>
+                      )}
+                    </span>
                   )}
                 </div>
               )}
