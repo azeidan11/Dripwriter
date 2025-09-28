@@ -456,7 +456,17 @@ export default function DashboardPage() {
   }
 
   function cancelClientDrip() {
-    resetToIdle();
+    // Stop the current run but keep the connected Doc; unlock inputs for editing
+    setDripStatus("idle");
+    stopTimer();
+    napRef.current = 0;
+    idxRef.current = 0;
+    tokensRef.current = [];
+    totalWordsRef.current = 0;
+    doneWordsRef.current = 0;
+    setDripProgress({ done: 0, total: 0 });
+    setUsedDocLocked(false);   // unlock the "Use this Doc" button
+    setDocInputOpen(true);     // reveal the URL textbox again for edits
   }
 
   useEffect(() => () => stopTimer(), []);
@@ -966,7 +976,7 @@ export default function DashboardPage() {
                       onChange={(e) => { setDocInput(e.target.value); setUsedDocLocked(false); }}
                       disabled={!signedIn || usedDocLocked}
                       placeholder="Paste Google Doc URL or ID"
-                        className="cursor-text w-full rounded-full border border-black/10 bg-white/80 text-black px-4 py-2 text-sm placeholder-black/50 focus:outline-none focus:ring-2 focus:ring-pink-300 disabled:opacity-60"
+                      className="cursor-text w-full rounded-full border border-black/10 bg-white/80 text-black px-4 py-2 text-sm placeholder-black/50 focus:outline-none focus:ring-0 disabled:opacity-60"
                     />
                     <button
                       type="button"
