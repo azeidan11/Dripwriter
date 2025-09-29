@@ -1014,7 +1014,15 @@ export default function DashboardPage() {
                     {!usedDocLocked && (
                       <button
                         type="button"
-                        onClick={() => { setDocInputOpen(false); setDocControlsLocked(false); setUsedDocLocked(false); }}
+                        onClick={() => {
+                          // Collapse the URL input and fully unlock controls
+                          setDocInputOpen(false);
+                          setDocControlsLocked(false);
+                          setUsedDocLocked(false);
+                          // Remove any current connection so the Connected Doc line hides
+                          setDocId(null);
+                          setDocUrl(null);
+                        }}
                         className="rounded-full bg-white text-black px-3 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 cursor-pointer"
                         aria-label="Close Doc URL"
                         title="Close"
@@ -1091,7 +1099,7 @@ export default function DashboardPage() {
                           onClick={() => appendOnce(text.trim().split(/\s+/).slice(0, 12).join(" "))}
                           className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
                         >
-                          {appending ? "Appending…" : "Append once (test)"}
+                          {appending ? "Sending Text to your Google Doc..." : "Test Connection"}
                         </button>
                       </>
                     )}
