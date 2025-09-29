@@ -2,7 +2,7 @@
 
 // app/dashboard/page.tsx
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useSession, signIn } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 type Duration = 30 | 60 | 120 | 360 | 720 | 1440 | 4320 | 10080;
 
@@ -519,6 +519,24 @@ export default function DashboardPage() {
       <div className="fixed inset-0 -z-10 bg-gradient-to-b from-[#e38db7] to-[#b35c8f]" />
 
       <section className="relative mx-auto w-full px-6 md:px-8 pt-10 pb-20 lg:pl-[255px]">
+        {/* TEMP sign in/out buttons for dev */}
+        <div className="mb-4">
+          {!signedIn ? (
+            <button
+              onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+              className="cursor-pointer rounded-full bg-black text-white px-4 py-2 text-sm font-semibold hover:bg-black/90"
+            >
+              Sign in (temp)
+            </button>
+          ) : (
+            <button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="cursor-pointer rounded-full bg-white text-black px-4 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5"
+            >
+              Sign out (temp)
+            </button>
+          )}
+        </div>
         {/* Fixed left dashboard rail */}
         <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-[239px] select-none">
           <nav className="flex-1 px-4 py-6 flex flex-col">
@@ -893,7 +911,7 @@ export default function DashboardPage() {
               </label>
               <textarea
                 id="prompt"
-                disabled={!signedIn}
+                disabled={!signedIn || dripStatus === "running" || dripStatus === "paused"}
                 value={text}
                 onChange={(e) => handleChange(e.target.value)}
                 className={`w-full h-[26rem] rounded-xl border bg-white text-black p-4 resize-none focus:outline-none focus:ring-2 transform-gpu transition-transform duration-200 ease-out ${
