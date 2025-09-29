@@ -133,6 +133,7 @@ export default function DashboardPage() {
   const [connectError, setConnectError] = useState<string | null>(null);
   const [docInputOpen, setDocInputOpen] = useState(false);
   const [usedDocLocked, setUsedDocLocked] = useState(false);
+  const [docControlsLocked, setDocControlsLocked] = useState(false);
 
   // Accepts full URL or raw ID
   function parseDocId(input: string): string | null {
@@ -154,6 +155,7 @@ export default function DashboardPage() {
       if (!res.ok) throw new Error(data.error || "Failed to create doc");
       setDocId(data.docId);
       setDocUrl(data.url);
+      setDocControlsLocked(true);
     } catch (e: any) {
       setConnectError(e.message || "Could not create doc");
     } finally {
@@ -395,6 +397,7 @@ export default function DashboardPage() {
       setConnectError("Paste some text to drip");
       return;
     }
+    setDocControlsLocked(true);
     const normalized = textTrim.replace(/\r\n/g, "\n");
     const tokens = normalized.match(/\S+|\s+/g) || []; // words OR whitespace
     tokensRef.current = tokens;
@@ -454,6 +457,7 @@ export default function DashboardPage() {
     setDocInput("");
     setDocInputOpen(false);
     setUsedDocLocked(false);
+    setDocControlsLocked(false);
   }
 
   function cancelClientDrip() {
@@ -467,7 +471,8 @@ export default function DashboardPage() {
     doneWordsRef.current = 0;
     setDripProgress({ done: 0, total: 0 });
     setUsedDocLocked(false);   // unlock the "Use this Doc" button
-    setDocInputOpen(true);     // reveal the URL textbox again for edits
+    setDocInputOpen(false);    // keep collapsed; show both buttons
+    setDocControlsLocked(false);
   }
 
   useEffect(() => () => stopTimer(), []);
@@ -969,7 +974,7 @@ export default function DashboardPage() {
               <div className="flex flex-col md:flex-row md:items-center gap-3">
                 <button
                   type="button"
-                  disabled={!signedIn || connecting}
+                  disabled={!signedIn || connecting || docControlsLocked}
                   onClick={handleCreateDoc}
                   className="rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
@@ -981,7 +986,7 @@ export default function DashboardPage() {
                   {!docInputOpen ? (
                 <button
                   type="button"
-                  disabled={!signedIn}
+                  disabled={!signedIn || docControlsLocked}
                   onClick={() => { setDocInputOpen(true); setUsedDocLocked(false); }}
                       className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
                 >
@@ -993,13 +998,13 @@ export default function DashboardPage() {
                       type="text"
                       value={docInput}
                       onChange={(e) => { setDocInput(e.target.value); setUsedDocLocked(false); }}
-                      disabled={!signedIn || usedDocLocked}
+                      disabled={!signedIn || usedDocLocked || docControlsLocked}
                       placeholder="Paste Google Doc URL or ID"
                       className="cursor-text w-full rounded-full border border-black/10 bg-white/80 text-black px-4 py-2 text-sm placeholder-black/50 focus:outline-none focus:ring-0 disabled:opacity-60"
                     />
                     <button
                       type="button"
-                      disabled={!signedIn || usedDocLocked}
+                      disabled={!signedIn || usedDocLocked || docControlsLocked}
                       onClick={handleUseExistingDoc}
                       className={`rounded-full px-5 py-2 text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap ${usedDocLocked ? 'bg-black/30 text-white cursor-not-allowed' : 'bg-black text-white hover:bg-black/90 cursor-pointer'}`}
                     >
