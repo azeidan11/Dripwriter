@@ -451,17 +451,15 @@ export default function DashboardPage() {
     totalWordsRef.current = 0;
     doneWordsRef.current = 0;
     setDripProgress({ done: 0, total: 0 });
-    // Reset doc selection UI but keep the user's text in the textarea
+    // Clear connected doc; require user to choose again, but keep the last typed URL in docInput
     setDocId(null);
     setDocUrl(null);
-    setDocInput("");
     setDocInputOpen(false);
     setUsedDocLocked(false);
     setDocControlsLocked(false);
   }
 
   function cancelClientDrip() {
-    // Stop the current run but keep the connected Doc; unlock inputs for editing
     setDripStatus("idle");
     stopTimer();
     napRef.current = 0;
@@ -470,8 +468,11 @@ export default function DashboardPage() {
     totalWordsRef.current = 0;
     doneWordsRef.current = 0;
     setDripProgress({ done: 0, total: 0 });
-    setUsedDocLocked(false);   // unlock the "Use this Doc" button
-    setDocInputOpen(false);    // keep collapsed; show both buttons
+    // Clear connected doc; require user to choose again, but keep the last typed URL in docInput
+    setDocId(null);
+    setDocUrl(null);
+    setDocInputOpen(false);
+    setUsedDocLocked(false);
     setDocControlsLocked(false);
   }
 
