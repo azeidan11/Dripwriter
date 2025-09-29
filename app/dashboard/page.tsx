@@ -987,7 +987,7 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   disabled={!signedIn || docControlsLocked}
-                  onClick={() => { setDocInputOpen(true); setUsedDocLocked(false); }}
+                  onClick={() => { setDocInputOpen(true); setUsedDocLocked(false); setDocControlsLocked(true); }}
                       className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
                 >
                   Use existing Google Doc
@@ -998,18 +998,29 @@ export default function DashboardPage() {
                       type="text"
                       value={docInput}
                       onChange={(e) => { setDocInput(e.target.value); setUsedDocLocked(false); }}
-                      disabled={!signedIn || usedDocLocked || docControlsLocked}
+                      disabled={!signedIn || usedDocLocked}
                       placeholder="Paste Google Doc URL or ID"
                       className="cursor-text w-full rounded-full border border-black/10 bg-white/80 text-black px-4 py-2 text-sm placeholder-black/50 focus:outline-none focus:ring-0 disabled:opacity-60"
                     />
                     <button
                       type="button"
-                      disabled={!signedIn || usedDocLocked || docControlsLocked}
+                      disabled={!signedIn || usedDocLocked}
                       onClick={handleUseExistingDoc}
                       className={`rounded-full px-5 py-2 text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap ${usedDocLocked ? 'bg-black/30 text-white cursor-not-allowed' : 'bg-black text-white hover:bg-black/90 cursor-pointer'}`}
                     >
                       Use this Doc
                     </button>
+                    {!usedDocLocked && (
+                      <button
+                        type="button"
+                        onClick={() => { setDocInputOpen(false); setDocControlsLocked(false); setUsedDocLocked(false); }}
+                        className="rounded-full bg-white text-black px-3 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 cursor-pointer"
+                        aria-label="Close Doc URL"
+                        title="Close"
+                      >
+                        ×
+                      </button>
+                    )}
                   </div>
                   )}
               </div>
