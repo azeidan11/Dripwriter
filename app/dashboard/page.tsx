@@ -977,7 +977,7 @@ export default function DashboardPage() {
                   type="button"
                   disabled={!signedIn || connecting || docControlsLocked}
                   onClick={handleCreateDoc}
-                  className="rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {connecting ? "Creating…" : "Create New Google Doc"}
                 </button>
