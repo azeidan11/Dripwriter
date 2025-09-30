@@ -30,8 +30,10 @@ export const authOptions: NextAuthOptions = {
       if (!email) return false;
       await prisma.user.upsert({
         where: { email },
-        update: {},
-        create: { email, plan: "FREE" },
+        update: {
+          name: (profile as any)?.name ?? null,
+        },
+        create: { email, plan: "FREE", name: (profile as any)?.name ?? null },
       });
       return true;
     },
@@ -86,6 +88,9 @@ export const authOptions: NextAuthOptions = {
         if (user) {
           (session as any).userId = user.id;
           (session as any).plan = user.plan;
+          if (session.user) {
+            session.user.name = user.name ?? session.user.name ?? null;
+          }
         } else {
           // Fallback to token payload if somehow user is missing
           (session as any).userId = (token as any)?.userId;
