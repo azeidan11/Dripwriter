@@ -79,10 +79,26 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }: any) {
-      session.accessToken = token.accessToken;
-      session.refreshToken = token.refreshToken;
-      (session as any).userId = (token as any)?.userId;
-      (session as any).plan = (token as any)?.plan;
+      // Always prefer DB as the source of truth so plan changes reflect immediately
+      const email = session?.user?.email as string | undefined;
+      if (email) {
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (user) {
+          (session as any).userId = user.id;
+          (session as any).plan = user.plan;
+        } else {
+          // Fallback to token payload if somehow user is missing
+          (session as any).userId = (token as any)?.userId;
+          (session as any).plan = (token as any)?.plan ?? "FREE";
+        }
+      } else {
+        (session as any).userId = (token as any)?.userId;
+        (session as any).plan = (token as any)?.plan ?? "FREE";
+      }
+
+      // Expose OAuth tokens for server-side Google API calls
+      session.accessToken = (token as any)?.accessToken;
+      session.refreshToken = (token as any)?.refreshToken;
       return session;
     },
   },

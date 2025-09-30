@@ -42,7 +42,7 @@ type Plan = "dev" | "free" | "starter" | "pro" | "daypass";
 
 // For development we keep everything unlocked.
 // Later, read this from the signed-in user's session.
-const PLAN: Plan = "free";
+const PLAN: Plan = "dev";
 
 const FREE_CAPS: Record<Duration, number> = {
   30: 500,
@@ -957,19 +957,21 @@ export default function DashboardPage() {
                 placeholder="Paste your text here..."
               />
 
-              {/* Word count + pro note */}
-              <div className={`mt-2 text-xs ${over ? "text-red-500" : "text-black/70"}`}>
-                {words}/{cap} words {over && "• You’re over the suggested limit for this duration."}
-              </div>
-              {signedIn && usage && (
-                <div className="mt-1 inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/80 px-3 py-1 text-xs text-black">
-                  {usage.cap === null ? (
-                    <span>Unlimited daily words</span>
-                  ) : (
-                    <span>{usage.remaining ?? 0} / {usage.cap} words left today</span>
-                  )}
+              {/* Word count (left) + Daily limit (right) */}
+              <div className="mt-2 flex items-baseline justify-between">
+                <div className={`text-xs ${over ? "text-red-500" : "text-black/70"}`}>
+                  {words}/{cap} words {over && "• You’re over the suggested limit for this duration."}
                 </div>
-              )}
+                {signedIn && usage && (
+                  <div className="text-xs text-black/70 font-semibold">
+                    {usage.cap === null ? (
+                      <span>Unlimited daily words</span>
+                    ) : (
+                      <span>Daily limit: {usage.remaining ?? 0}/{usage.cap}</span>
+                    )}
+                  </div>
+                )}
+              </div>
               {/* Guidance based on words vs duration (proportional thresholds) */}
               {words > 0 && (
                 <div className="mt-1 text-xs text-black/70">
