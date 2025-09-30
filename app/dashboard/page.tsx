@@ -776,7 +776,7 @@ export default function DashboardPage() {
               {/* My Account */}
               <button className="w-[215px] h-10 text-left rounded-lg px-3 hover:bg-white/10 flex items-center gap-3 text-white/90 cursor-pointer">
                 {/* Left icon: account circle */}
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="h-6.5 w-6.5">
                   <circle cx="12" cy="12" r="10"></circle>
                   <circle cx="12" cy="9.5" r="3"></circle>
                   <path d="M6.5 18a7 7 0 0 1 11 0"></path>
