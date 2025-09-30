@@ -28,8 +28,8 @@ const PRO_CAPS: Record<Duration, number> = {
 };
 
 const STARTER_CAPS: Record<Duration, number> = {
-  30: 1500,
-  60: 2000,
+  30: 1000,
+  60: 1500,
   120: 2500,
   360: 3500,
   720: 4000,
@@ -45,8 +45,8 @@ type Plan = "dev" | "free" | "starter" | "pro" | "daypass";
 const PLAN: Plan = "dev";
 
 const FREE_CAPS: Record<Duration, number> = {
-  30: 1000,
-  60: 1500,
+  30: 500,
+  60: 750,
   120: 0,
   360: 0,
   720: 0,
@@ -949,7 +949,7 @@ export default function DashboardPage() {
                         <>
                           <span className="text-amber-700">That’s a lot of words for {durationLabel(duration)}.</span>{' '}
                           {sug && sug !== duration ? (
-                            <span>We suggest {durationLabel(sug)} for a more relaxed drip.</span>
+                            <span>We suggest {durationLabel(sug)} for a more realistic drip.</span>
                           ) : null}
                         </>
                       );
@@ -960,12 +960,12 @@ export default function DashboardPage() {
               )}
               {PLAN === "free" && (
                 <div className="mt-1 text-xs italic text-black/60">
-                  {PRO_CAPS[duration].toLocaleString()} words with Pro / Day Pass
+                  {PRO_CAPS[duration].toLocaleString()}+ words with Pro
                 </div>
               )}
               {PLAN === "starter" && (
                 <div className="mt-1 text-xs italic text-black/60">
-                  {PRO_CAPS[duration].toLocaleString()} words with Pro
+                  {PRO_CAPS[duration].toLocaleString()}+ words with Pro
                 </div>
               )}
             </div>
