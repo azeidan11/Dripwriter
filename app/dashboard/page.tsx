@@ -38,7 +38,7 @@ const STARTER_CAPS: Record<Duration, number> = {
   10080: 0,    // locked in Starter
 };
 
-type Plan = "free" | "starter" | "pro" | "daypass";
+type Plan = "FREE" | "STARTER" | "PRO" | "DAYPASS" | "DEV";
 
 const FREE_CAPS: Record<Duration, number> = {
   30: 500,
@@ -51,13 +51,6 @@ const FREE_CAPS: Record<Duration, number> = {
   10080: 0,
 };
 
-const CAPS_BY_PLAN: Record<"dev" | Plan, Record<Duration, number>> = {
-  dev: PRO_CAPS,
-  pro: PRO_CAPS,
-  daypass: PRO_CAPS,
-  starter: STARTER_CAPS,
-  free: FREE_CAPS,
-};
 
 // --- Duration helpers ---
 function durationLabel(v: Duration) {
@@ -66,14 +59,19 @@ function durationLabel(v: Duration) {
 }
 
 function nextDurationSuggestion(words: number, plan: Plan, current: Duration): Duration | null {
-  const durationsAsc = [...DURATIONS.map(d=>d.value)].sort((a,b)=>a-b) as Duration[];
-  const needed = Math.ceil(words * 1.1);
-  for (const d of durationsAsc) {
-    if (d <= current) continue; // only suggest longer than current
-    if (CAPS_BY_PLAN[plan][d] >= needed) return d;
+    const durationsAsc = [...DURATIONS.map(d=>d.value)].sort((a,b)=>a-b) as Duration[];
+    const needed = Math.ceil(words * 1.1);
+    const table = (plan === "PRO" || plan === "DAYPASS" || plan === "DEV")
+      ? PRO_CAPS
+      : plan === "STARTER"
+      ? STARTER_CAPS
+      : FREE_CAPS; // FREE
+    for (const d of durationsAsc) {
+      if (d <= current) continue; // only suggest longer than current
+      if (table[d] >= needed) return d;
+    }
+    return null;
   }
-  return null;
-}
 
 export default function DashboardPage() {
   const { data: session } = useSession();
@@ -81,22 +79,26 @@ export default function DashboardPage() {
 
   // Derive plan from session (defaults to "free" if missing)
   const PLAN: Plan = useMemo(() => {
-    const raw = ((session as any)?.plan ?? "FREE").toString().toLowerCase();
-    if (raw === "free" || raw === "starter" || raw === "pro" || raw === "daypass") return raw as Plan;
-    return "free";
-  }, [session]);
+       const raw = (session as any)?.plan as Plan | undefined;
+       return (raw === "FREE" || raw === "STARTER" || raw === "PRO" || raw === "DAYPASS" || raw === "DEV") ? raw : "FREE";
+     }, [session]);
 
-  const planDisplay =
-    PLAN === "free" ? "Free Plan" : PLAN === "starter" ? "Starter Plan" : PLAN === "pro" ? "Pro Plan" : "Day Pass";
+     const planDisplay =
+        PLAN === "FREE" ? "Free Plan"
+        : PLAN === "STARTER" ? "Starter Plan"
+        : PLAN === "PRO" ? "Pro Plan"
+        : PLAN === "DAYPASS" ? "Day Pass"
+        : "Dev";
 
-  const upgradeCta = PLAN === "free" ? "Upgrade Now" : PLAN === "starter" ? "Upgrade to Pro" : "Browse Plans";
+      const upgradeCta = PLAN === "FREE" ? "Upgrade Now" : PLAN === "STARTER" ? "Upgrade to Pro" : "Browse Plans";
 
   // Range copy for How It Works — Step 2
-  const planMaxLabel = PLAN === "free" ? "1 hr" : PLAN === "starter" ? "1 day" : "1 week"; // pro & daypass → 1 week
+  const planMaxLabel = PLAN === "FREE" ? "1 hr" : PLAN === "STARTER" ? "1 day" : "1 week"; // PRO/DAYPASS/DEV → 1 week
   const planRangeText = `30 mins up to ${planMaxLabel}`;
 
   // Features no longer shown as coming soon (enable UI)
-  const comingSoon = false;
+  // Lock sidebar features for all plans except DEV (master plan)
+  const comingSoon = PLAN !== "DEV";
 
   const [duration, setDuration] = useState<Duration>(30);
   const [text, setText] = useState("");
@@ -104,7 +106,14 @@ export default function DashboardPage() {
   const [uploadTip, setUploadTip] = useState<{ x: number; y: number; show: boolean }>({ x: 0, y: 0, show: false });
   const [scanTip, setScanTip] = useState<{ x: number; y: number; show: boolean }>({ x: 0, y: 0, show: false });
   const [recentTip, setRecentTip] = useState<{ x: number; y: number; show: boolean }>({ x: 0, y: 0, show: false });
-  const cap = useMemo(() => CAPS_BY_PLAN[PLAN][duration], [PLAN, duration]);
+  const cap = useMemo(() => {
+       const table = (PLAN === "PRO" || PLAN === "DAYPASS" || PLAN === "DEV")
+         ? PRO_CAPS
+         : PLAN === "STARTER"
+         ? STARTER_CAPS
+         : FREE_CAPS; // FREE
+       return table[duration];
+     }, [PLAN, duration]);
 
   // --- Google Doc connect (no DB) ---
   const [docId, setDocId] = useState<string | null>(null);
@@ -488,7 +497,7 @@ export default function DashboardPage() {
 
   useEffect(() => () => stopTimer(), []);
   useEffect(() => {
-    if (signedIn && PLAN === "free") {
+    if (signedIn && PLAN === "FREE") {
       refreshUsage();
     } else {
       // Clear usage so no stale badge shows for paid plans
@@ -800,7 +809,7 @@ export default function DashboardPage() {
                   <path d="M6.5 18a7 7 0 0 1 11 0"></path>
                 </svg>
                 <span className="leading-tight">
-                  <span className="block text-white font-medium -mb-0.5">My Account</span>
+                <span className="block text-white font-medium -mb-0.5">{session?.user?.name || "My Account"}</span>
                   <span className="block text-white/70 text-xs mt-0.5">{planDisplay}</span>
                 </span>
                 {/* Always-visible right chevron */}
@@ -856,12 +865,14 @@ export default function DashboardPage() {
                   // Plan-based gating
                   let locked = false;
                   let tooltip = "";
-                  if (PLAN === "free") {
+                  if (PLAN === "FREE") {
                     locked = opt.value >= 120; // anything beyond 1 hr
                     tooltip = "Upgrade now";
-                  } else if (PLAN === "starter") {
+                  } else if (PLAN === "STARTER") {
                     locked = opt.value === 4320 || opt.value === 10080; // lock 3 days & 1 week
                     tooltip = locked ? "Upgrade to Pro" : "";
+                  } else {
+                     locked = false; // PRO, DAYPASS, DEV
                   }
 
                   if (locked) {
@@ -948,7 +959,7 @@ export default function DashboardPage() {
                 <div className={`text-xs ${over ? "text-red-500" : "text-black/70"}`}>
                   {words}/{cap} words {over && "• You’re over the suggested limit for this duration."}
                 </div>
-                {signedIn && PLAN === "free" && usage && (
+                {signedIn && PLAN === "FREE" && usage && (
                   <div className="text-xs text-black/70 font-semibold">
                     <span>Daily limit: {usage.remaining ?? 0}/{usage.cap}</span>
                   </div>
@@ -982,12 +993,12 @@ export default function DashboardPage() {
                   })()}
                 </div>
               )}
-              {PLAN === "free" && (
+              {PLAN === "FREE" && (
                 <div className="mt-1 text-xs italic text-black/60">
                   {PRO_CAPS[duration].toLocaleString()}+ words with Pro
                 </div>
               )}
-              {PLAN === "starter" && (
+              {PLAN === "STARTER" && (
                 <div className="mt-1 text-xs italic text-black/60">
                   {PRO_CAPS[duration].toLocaleString()}+ words with Pro
                 </div>
