@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  FREE
+  STARTER
+  PRO
+  DAYPASS
+  DEV
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  plan      Plan     @default(FREE)
+  tz        String?  // e.g. "America/Los_Angeles"
+  createdAt DateTime @default(now())
+
+  DailyUsages  DailyUsage[]
+  DripSessions DripSession[]
+}
+
+model DailyUsage {
+  id        String @id @default(cuid())
+  userId    String
+  dateKey   String   // "YYYY-MM-DD" (UTC or user's tz)
+  wordsUsed Int      @default(0)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, dateKey])
+}
+
+model DripSession {
+  id                 String   @id @default(cuid())
+  userId             String
+  planSnapshot       Plan
+  startedAt          DateTime @default(now())
+  endedAt            DateTime?
+  totalWordsPlanned  Int?
+  totalWordsAppended Int      @default(0)
+
+  user    User         @relation(fields: [userId], references: [id])
+  Appends DripAppend[]
+}
+
+model DripAppend {
+  id            String   @id @default(cuid())
+  sessionId     String
+  sequence      Int      // 1,2,3… ensures no double-count on retries
+  wordsAppended Int
+  createdAt     DateTime @default(now())
+
+  session DripSession @relation(fields: [sessionId], references: [id])
+
+  @@unique([sessionId, sequence])
+}

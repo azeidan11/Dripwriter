@@ -1,5 +1,6 @@
-import NextAuth from "next-auth";
-import Google from "next-auth/providers/google";
+import NextAuth, { type NextAuthOptions } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+import { prisma } from "@/lib/db";
 
 const scopes = [
   "openid",
@@ -9,9 +10,9 @@ const scopes = [
   "https://www.googleapis.com/auth/drive.file",
 ].join(" ");
 
-export const authOptions = {
+export const authOptions: NextAuthOptions = {
   providers: [
-    Google({
+    GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       authorization: {
@@ -24,6 +25,16 @@ export const authOptions = {
     }),
   ],
   callbacks: {
+    async signIn({ profile }: any) {
+      const email = profile?.email;
+      if (!email) return false;
+      await prisma.user.upsert({
+        where: { email },
+        update: {},
+        create: { email, plan: "FREE" },
+      });
+      return true;
+    },
     async jwt({ token, account }: any) {
       if (account) {
         token.accessToken = account.access_token;
@@ -56,15 +67,26 @@ export const authOptions = {
           token.expiresAt = undefined;
         }
       }
+
+      if (token?.email) {
+        const user = await prisma.user.findUnique({ where: { email: token.email as string } });
+        if (user) {
+          (token as any).userId = user.id;
+          (token as any).plan = user.plan;
+        }
+      }
+
       return token;
     },
     async session({ session, token }: any) {
       session.accessToken = token.accessToken;
       session.refreshToken = token.refreshToken;
+      (session as any).userId = (token as any)?.userId;
+      (session as any).plan = (token as any)?.plan;
       return session;
     },
   },
-} as const;
+};
 
-const handler = NextAuth(authOptions as any);
+const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

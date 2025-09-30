@@ -42,7 +42,7 @@ type Plan = "dev" | "free" | "starter" | "pro" | "daypass";
 
 // For development we keep everything unlocked.
 // Later, read this from the signed-in user's session.
-const PLAN: Plan = "dev";
+const PLAN: Plan = "free";
 
 const FREE_CAPS: Record<Duration, number> = {
   30: 500,
@@ -135,6 +135,23 @@ export default function DashboardPage() {
   const [usedDocLocked, setUsedDocLocked] = useState(false);
   const [docControlsLocked, setDocControlsLocked] = useState(false);
 
+  // --- Daily usage (for Free caps) ---
+  const [usage, setUsage] = useState<{
+    plan: string;
+    cap: number | null;
+    used: number;
+    remaining: number | null;
+  } | null>(null);
+
+  async function refreshUsage() {
+    try {
+      const res = await fetch("/api/google/docs/append", { method: "GET" });
+      if (!res.ok) return; // silently ignore if unauth
+      const data = await res.json();
+      setUsage(data);
+    } catch {}
+  }
+
   // Accepts full URL or raw ID
   function parseDocId(input: string): string | null {
     const raw = input.trim();
@@ -173,6 +190,7 @@ export default function DashboardPage() {
     setDocId(id);
     setDocUrl(`https://docs.google.com/document/d/${id}/edit`);
     setUsedDocLocked(true);
+    if (signedIn) refreshUsage();
     // Keep the textbox + button visible, just locked
   }
 
@@ -189,6 +207,16 @@ export default function DashboardPage() {
         body: JSON.stringify({ docId, text: textChunk })
       });
       const data = await res.json();
+      // Update usage from append response if present
+      if (typeof data.remaining !== "undefined") {
+        setUsage((u) => {
+          if (!u) return u;
+          if (u.cap === null) return u; // unlimited plans
+          const newRemaining = Math.max(0, Number(data.remaining ?? 0));
+          const newUsed = Math.max(0, u.cap - newRemaining);
+          return { ...u, remaining: newRemaining, used: newUsed };
+        });
+      }
       if (!res.ok) throw new Error(data.error || "Append failed");
     } catch (e: any) {
       setConnectError(e.message || "Append failed");
@@ -477,6 +505,9 @@ export default function DashboardPage() {
   }
 
   useEffect(() => () => stopTimer(), []);
+  useEffect(() => {
+    if (signedIn) refreshUsage();
+  }, [signedIn]);
   useEffect(() => {
     if (dripStatus !== "running") return;
     setTimeLeftMs(Math.max(0, endsAtRef.current - Date.now()));
@@ -930,6 +961,15 @@ export default function DashboardPage() {
               <div className={`mt-2 text-xs ${over ? "text-red-500" : "text-black/70"}`}>
                 {words}/{cap} words {over && "• You’re over the suggested limit for this duration."}
               </div>
+              {signedIn && usage && (
+                <div className="mt-1 inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/80 px-3 py-1 text-xs text-black">
+                  {usage.cap === null ? (
+                    <span>Unlimited daily words</span>
+                  ) : (
+                    <span>{usage.remaining ?? 0} / {usage.cap} words left today</span>
+                  )}
+                </div>
+              )}
               {/* Guidance based on words vs duration (proportional thresholds) */}
               {words > 0 && (
                 <div className="mt-1 text-xs text-black/70">
