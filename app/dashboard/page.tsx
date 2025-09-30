@@ -38,11 +38,7 @@ const STARTER_CAPS: Record<Duration, number> = {
   10080: 0,    // locked in Starter
 };
 
-type Plan = "dev" | "free" | "starter" | "pro" | "daypass";
-
-// For development we keep everything unlocked.
-// Later, read this from the signed-in user's session.
-const PLAN: Plan = "dev";
+type Plan = "free" | "starter" | "pro" | "daypass";
 
 const FREE_CAPS: Record<Duration, number> = {
   30: 500,
@@ -55,7 +51,7 @@ const FREE_CAPS: Record<Duration, number> = {
   10080: 0,
 };
 
-const CAPS_BY_PLAN: Record<Plan, Record<Duration, number>> = {
+const CAPS_BY_PLAN: Record<"dev" | Plan, Record<Duration, number>> = {
   dev: PRO_CAPS,
   pro: PRO_CAPS,
   daypass: PRO_CAPS,
@@ -83,38 +79,24 @@ export default function DashboardPage() {
   const { data: session } = useSession();
   const signedIn = !!session;
 
-  // Normalize PLAN for UI (treat dev as pro for display)
-  const effectivePlan: Plan = PLAN === "dev" ? "pro" : PLAN;
-  const planDisplay =
-    effectivePlan === "free"
-      ? "Free Plan"
-      : effectivePlan === "starter"
-      ? "Starter Plan"
-      : effectivePlan === "pro"
-      ? "Pro Plan"
-      : effectivePlan === "daypass"
-      ? "Day Pass"
-      : String(effectivePlan);
+  // Derive plan from session (defaults to "free" if missing)
+  const PLAN: Plan = useMemo(() => {
+    const raw = ((session as any)?.plan ?? "FREE").toString().toLowerCase();
+    if (raw === "free" || raw === "starter" || raw === "pro" || raw === "daypass") return raw as Plan;
+    return "free";
+  }, [session]);
 
-  const upgradeCta =
-    effectivePlan === "free"
-      ? "Upgrade Now"
-      : effectivePlan === "starter"
-      ? "Upgrade to Pro"
-      : effectivePlan === "pro"
-      ? "Browse Plans"
-      : "Browse Plans";
+  const planDisplay =
+    PLAN === "free" ? "Free Plan" : PLAN === "starter" ? "Starter Plan" : PLAN === "pro" ? "Pro Plan" : "Day Pass";
+
+  const upgradeCta = PLAN === "free" ? "Upgrade Now" : PLAN === "starter" ? "Upgrade to Pro" : "Browse Plans";
 
   // Range copy for How It Works — Step 2
-  const planMaxLabel =
-    effectivePlan === "free"
-      ? "1 hr"
-      : effectivePlan === "starter"
-      ? "1 day"
-      : "1 week"; // pro & daypass fall into "1 week"
+  const planMaxLabel = PLAN === "free" ? "1 hr" : PLAN === "starter" ? "1 day" : "1 week"; // pro & daypass → 1 week
   const planRangeText = `30 mins up to ${planMaxLabel}`;
 
-  const comingSoon = PLAN !== "dev";
+  // Features no longer shown as coming soon (enable UI)
+  const comingSoon = false;
 
   const [duration, setDuration] = useState<Duration>(30);
   const [text, setText] = useState("");
@@ -122,7 +104,7 @@ export default function DashboardPage() {
   const [uploadTip, setUploadTip] = useState<{ x: number; y: number; show: boolean }>({ x: 0, y: 0, show: false });
   const [scanTip, setScanTip] = useState<{ x: number; y: number; show: boolean }>({ x: 0, y: 0, show: false });
   const [recentTip, setRecentTip] = useState<{ x: number; y: number; show: boolean }>({ x: 0, y: 0, show: false });
-  const cap = useMemo(() => CAPS_BY_PLAN[PLAN][duration], [duration]);
+  const cap = useMemo(() => CAPS_BY_PLAN[PLAN][duration], [PLAN, duration]);
 
   // --- Google Doc connect (no DB) ---
   const [docId, setDocId] = useState<string | null>(null);
@@ -506,8 +488,13 @@ export default function DashboardPage() {
 
   useEffect(() => () => stopTimer(), []);
   useEffect(() => {
-    if (signedIn) refreshUsage();
-  }, [signedIn]);
+    if (signedIn && PLAN === "free") {
+      refreshUsage();
+    } else {
+      // Clear usage so no stale badge shows for paid plans
+      setUsage(null);
+    }
+  }, [signedIn, PLAN]);
   useEffect(() => {
     if (dripStatus !== "running") return;
     setTimeLeftMs(Math.max(0, endsAtRef.current - Date.now()));
@@ -880,7 +867,15 @@ export default function DashboardPage() {
                   if (locked) {
                     return (
                       <label key={opt.value} className="group relative cursor-not-allowed opacity-60 select-none" aria-disabled="true">
-                        <input type="radio" name="duration" disabled className="sr-only" />
+                        <input
+                          type="radio"
+                          name="duration"
+                          value={opt.value}
+                          checked={duration === opt.value}
+                          onChange={() => {}}
+                          disabled
+                          className="sr-only"
+                        />
                         <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm cursor-not-allowed select-none">
                           {opt.label}
                         </span>
@@ -909,33 +904,24 @@ export default function DashboardPage() {
                   );
                 })}
 
-                {/* Custom "+" pill: unlocked for dev, disabled for others */}
-                {PLAN === "dev" ? (
-                  <label className="cursor-pointer">
-                    <input
-                      type="radio"
-                      name="duration"
-                      value="custom"
-                      checked={false}
-                      // Optionally, implement custom logic here for "+" selection
-                      onChange={() => {/* Could show a modal or custom duration logic here */}}
-                      className="peer sr-only"
-                    />
-                    <span className="inline-flex items-center rounded-full border border-black/10 bg-white/70 text-black/80 backdrop-blur-sm px-4 py-2 shadow-sm transition cursor-pointer peer-checked:bg-black peer-checked:text-white peer-checked:border-black/0">
-                      +
-                    </span>
-                  </label>
-                ) : (
-                  <label className="group relative cursor-not-allowed opacity-60 select-none" aria-disabled="true">
-                    <input type="radio" name="duration" disabled className="sr-only" />
-                    <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm cursor-not-allowed select-none">
-                      +
-                    </span>
-                    <span className="pointer-events-none absolute left-1/2 top-full z-50 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white shadow-lg group-hover:block">
-                      Upgrade now
-                    </span>
-                  </label>
-                )}
+                {/* Custom "+" pill (disabled placeholder) */}
+                <label className="group relative cursor-not-allowed opacity-60 select-none" aria-disabled="true">
+                  <input
+                    type="radio"
+                    name="duration"
+                    value="custom"
+                    checked={false}
+                    onChange={() => {}}
+                    disabled
+                    className="sr-only"
+                  />
+                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm cursor-not-allowed select-none">
+                    +
+                  </span>
+                  <span className="pointer-events-none absolute left-1/2 top-full z-50 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white shadow-lg group-hover:block">
+                    Upgrade now
+                  </span>
+                </label>
               </div>
             </div>
 
@@ -962,13 +948,9 @@ export default function DashboardPage() {
                 <div className={`text-xs ${over ? "text-red-500" : "text-black/70"}`}>
                   {words}/{cap} words {over && "• You’re over the suggested limit for this duration."}
                 </div>
-                {signedIn && usage && (
+                {signedIn && PLAN === "free" && usage && (
                   <div className="text-xs text-black/70 font-semibold">
-                    {usage.cap === null ? (
-                      <span>Unlimited daily words</span>
-                    ) : (
-                      <span>Daily limit: {usage.remaining ?? 0}/{usage.cap}</span>
-                    )}
+                    <span>Daily limit: {usage.remaining ?? 0}/{usage.cap}</span>
                   </div>
                 )}
               </div>
