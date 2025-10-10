@@ -22,6 +22,14 @@ enum Plan {
   DEV
 }
 
+enum DripStatus {
+  RUNNING
+  PAUSED
+  DONE
+  ERROR
+  CANCELED
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -29,6 +37,10 @@ model User {
   name      String?  // full name from Google profile
   tz        String?  // e.g. "America/Los_Angeles"
   createdAt DateTime @default(now())
+
+  gAccessToken    String?
+  gAccessTokenExp Int?
+  gRefreshToken   String?
 
   DailyUsages  DailyUsage[]
   DripSessions DripSession[]
@@ -46,26 +58,23 @@ model DailyUsage {
 }
 
 model DripSession {
-  id                 String   @id @default(cuid())
-  userId             String
-  planSnapshot       Plan
-  startedAt          DateTime @default(now())
-  endedAt            DateTime?
-  totalWordsPlanned  Int?
-  totalWordsAppended Int      @default(0)
+  id          String     @id @default(cuid())
+  userId      String
+  docId       String
+  text        String
+  totalWords  Int
+  doneWords   Int        @default(0)
+  durationMin Int
+  status      DripStatus @default(RUNNING)
+  nextAt      DateTime
+  startedAt   DateTime   @default(now())
+  endsAt      DateTime
+  lastError   String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
-  user    User         @relation(fields: [userId], references: [id])
-  Appends DripAppend[]
-}
+  user User @relation(fields: [userId], references: [id])
 
-model DripAppend {
-  id            String   @id @default(cuid())
-  sessionId     String
-  sequence      Int      // 1,2,3… ensures no double-count on retries
-  wordsAppended Int
-  createdAt     DateTime @default(now())
-
-  session DripSession @relation(fields: [sessionId], references: [id])
-
-  @@unique([sessionId, sequence])
+  @@index([status, nextAt])
+  @@index([userId])
 }
