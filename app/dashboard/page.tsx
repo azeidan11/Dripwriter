@@ -908,31 +908,42 @@ export default function DashboardPage() {
                         onChange={() => setDuration(opt.value)}
                         className="peer sr-only"
                       />
-                      <span className="inline-flex items-center rounded-full border border-black/10 bg-white/70 text-black/80 backdrop-blur-sm px-4 py-2 shadow-sm transition cursor-pointer peer-checked:bg-black peer-checked:text-white peer-checked:border-black/0">
+                      <span className="inline-flex items-center rounded-full border border-black/10 bg-white/70 text-black/80 backdrop-blur-sm px-4 py-2 shadow-sm transition transition-shadow hover:shadow-lg cursor-pointer peer-checked:bg-black peer-checked:text-white peer-checked:border-black/0">
                         {opt.label}
                       </span>
                     </label>
                   );
                 })}
 
-                {/* Custom "+" pill (disabled placeholder) */}
-                <label className="group relative cursor-not-allowed opacity-60 select-none" aria-disabled="true">
-                  <input
-                    type="radio"
-                    name="duration"
-                    value="custom"
-                    checked={false}
-                    onChange={() => {}}
-                    disabled
-                    className="sr-only"
-                  />
-                  <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm cursor-not-allowed select-none">
+                {/* Custom "+" pill */}
+                {(PLAN === "PRO" || PLAN === "DEV") ? (
+                  <button
+                    type="button"
+                    onClick={() => { /* placeholder for future custom-duration modal */ }}
+                    className="inline-flex items-center rounded-full border border-black/10 bg-white/70 text-black/80 backdrop-blur-sm px-4 py-2 shadow-sm transition transition-shadow hover:shadow-lg cursor-pointer hover:bg-white"
+                    title="Custom duration (coming soon)"
+                  >
                     +
-                  </span>
-                  <span className="pointer-events-none absolute left-1/2 top-full z-50 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white shadow-lg group-hover:block">
-                    Upgrade now
-                  </span>
-                </label>
+                  </button>
+                ) : (
+                  <label className="group relative cursor-not-allowed opacity-60 select-none" aria-disabled="true">
+                    <input
+                      type="radio"
+                      name="duration"
+                      value="custom"
+                      checked={false}
+                      onChange={() => {}}
+                      disabled
+                      className="sr-only"
+                    />
+                    <span className="inline-flex items-center rounded-full border border-black/10 bg-white/60 text-black/60 backdrop-blur-sm px-4 py-2 shadow-sm cursor-not-allowed select-none">
+                      +
+                    </span>
+                    <span className="pointer-events-none absolute left-1/2 top-full z-50 hidden -translate-x-1/2 translate-y-2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-xs text-white shadow-lg group-hover:block">
+                      Upgrade now
+                    </span>
+                  </label>
+                )}
               </div>
             </div>
 
