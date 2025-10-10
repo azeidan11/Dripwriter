@@ -3,6 +3,7 @@
 // app/dashboard/page.tsx
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
+import { tokenizeKeepWhitespace, computeNextChunk } from "@/lib/dripFormula";
 
 type Duration = 30 | 60 | 120 | 360 | 720 | 1440 | 4320 | 10080;
 
@@ -278,123 +279,50 @@ export default function DashboardPage() {
       return;
     }
 
-    const now = Date.now();
-    const elapsed = now - startAtRef.current;
-    const total = Math.max(1, totalMsRef.current);
+    const plan = computeNextChunk({
+      tokens: tokensRef.current,
+      idx: idxRef.current,
+      totalWords: totalWordsRef.current,
+      doneWords: doneWordsRef.current,
+      tickMs,
+      startedAt: startAtRef.current,
+      endsAt: endsAtRef.current,
+      napUntil: napRef.current || undefined,
+      basePauseProb,
+      lookaheadTicksBase,
+      maxBurstBase,
+      maxBurstCatchup,
+      longNapChance,
+      mediumNapChance,
+      longNapRange,
+      mediumNapRange,
+    });
 
-    // If we're in a scheduled nap window, just update progress/ETA and bail
-    if (napRef.current && now < napRef.current) {
-      setDripProgress({ done: doneWordsRef.current, total: totalWords });
+    // Respect nap scheduling from the planner
+    if (plan.napUntil && Date.now() < plan.napUntil) {
+      napRef.current = plan.napUntil;
+      setDripProgress({ done: doneWordsRef.current, total: totalWordsRef.current });
       return;
     }
 
-    // Compute remaining time & ticks
-    const remainingMs = Math.max(0, endsAtRef.current - now);
-    const remainingTicks = Math.max(1, Math.round(remainingMs / tickMs));
-
-    // Targets
-    const currentTarget = Math.floor(totalWords * Math.min(1, elapsed / total));
-    const nextTarget = Math.floor(totalWords * Math.min(1, (elapsed + tickMs) / total));
-
-    // Adaptive lookahead window (bigger when we have time, smaller near the end)
-    const lookaheadTicks = Math.min(remainingTicks, lookaheadTicksBase);
-    const futureTarget = Math.floor(
-      totalWords * Math.min(1, (elapsed + lookaheadTicks * tickMs) / total)
-    );
-
-    const remainingWords = totalWords - doneWords;
-    const backlog = Math.max(0, currentTarget - doneWords);
-
-    // Decide whether we can afford a nap (ensure we can still finish with catch-up caps)
-    const maxPerTickNormal = maxBurstBase;
-    const maxPerTickCatchup = maxBurstCatchup;
-    const maxPossibleNoNap = remainingTicks * maxPerTickCatchup;
-    const canAffordAnyNap = remainingWords <= maxPossibleNoNap;
-
-    // On some ticks, schedule a longer nap *if we can afford it*
-    if (canAffordAnyNap && doneWords > 0) {
-      // Prefer long naps earlier in the run, medium naps later
-      const elapsedPct = elapsed / total;
-      const tryLong = Math.random() < longNapChance * (1 - elapsedPct); // more likely early
-      const tryMedium = Math.random() < mediumNapChance * (0.5 + 0.5 * elapsedPct); // more likely mid/late
-      if (tryLong) {
-        scheduleNap(longNapRange);
-        setDripProgress({ done: doneWordsRef.current, total: totalWords });
-        return;
-      }
-      if (tryMedium) {
-        scheduleNap(mediumNapRange);
-        setDripProgress({ done: doneWordsRef.current, total: totalWords });
-        return;
-      }
-    }
-
-    // Base desired increment: don't exceed a limited future target so we can catch up after naps
-    let toAddTarget = Math.max(0, futureTarget - doneWords);
-
-    // Ensure we at least meet the next tick's schedule
-    const minToMeetNext = Math.max(0, nextTarget - doneWords);
-
-    // Visible start guarantee
-    if (doneWords === 0) {
-      const firstBurst = Math.max(1, Math.min(12, totalWords));
-      toAddTarget = Math.max(toAddTarget, firstBurst);
-    }
-
-    // If we're at or above current target, allow aiming toward next target
-    if (toAddTarget < minToMeetNext) toAddTarget = minToMeetNext;
-
-    // If we're very close to deadline, guarantee finish: dump remaining words on the last tick
-    if (remainingTicks <= 1) {
-      toAddTarget = remainingWords;
-    }
-
-    // Jitter +/- 2 words
-    let toAdd = toAddTarget + (Math.floor(Math.random() * 5) - 2);
-    if (toAdd < 0) toAdd = 0;
-
-    // Cap bursts depending on whether we're catching up significantly
-    const capacityNormal = remainingTicks * maxPerTickNormal;
-    const isCatchingUp = backlog > 0 || remainingWords > capacityNormal;
-
-    const cap = isCatchingUp ? maxPerTickCatchup : maxPerTickNormal;
-    if (toAdd > cap) toAdd = cap;
-
-    if (toAdd === 0) {
-      setDripProgress({ done: doneWordsRef.current, total: totalWords });
+    if (!plan.chunkText || plan.addedWords === 0) {
+      setDripProgress({ done: doneWordsRef.current, total: totalWordsRef.current });
       return;
     }
-
-    // Build token slice preserving whitespace/newlines; count only non-whitespace tokens as words
-    const tokens = tokensRef.current;
-    let endIdx = idxRef.current;
-    let remaining = toAdd;
-    let appendedWordCount = 0;
-    while (endIdx < tokens.length && remaining > 0) {
-      if (/\S/.test(tokens[endIdx])) {
-        remaining -= 1;
-        appendedWordCount += 1;
-      }
-      endIdx += 1;
-    }
-
-    if (endIdx <= idxRef.current || appendedWordCount === 0) {
-      setDripProgress({ done: doneWordsRef.current, total: totalWords });
-      return;
-    }
-
-    const chunkText = tokens.slice(idxRef.current, endIdx).join("");
 
     try {
-      await appendOnce(chunkText);
-      idxRef.current = endIdx;
-      doneWordsRef.current = Math.min(totalWords, doneWordsRef.current + appendedWordCount);
-      setDripProgress({ done: doneWordsRef.current, total: totalWords });
+      await appendOnce(plan.chunkText);
+      idxRef.current = plan.newIdx;
+      doneWordsRef.current = Math.min(totalWordsRef.current, doneWordsRef.current + plan.addedWords);
+      setDripProgress({ done: doneWordsRef.current, total: totalWordsRef.current });
 
-      if (doneWordsRef.current >= totalWords) {
+      if (doneWordsRef.current >= totalWordsRef.current) {
         setDripStatus("done");
         stopTimer();
       }
+
+      // clear any nap instruction after applying it once
+      napRef.current = 0;
     } catch (e) {
       setConnectError((e as any)?.message || "Append failed during drip");
       setDripStatus("paused");
@@ -417,10 +345,9 @@ export default function DashboardPage() {
       return;
     }
     setDocControlsLocked(true);
-    const normalized = textTrim.replace(/\r\n/g, "\n");
-    const tokens = normalized.match(/\S+|\s+/g) || []; // words OR whitespace
+    const { tokens, totalWords } = tokenizeKeepWhitespace(textTrim);
     tokensRef.current = tokens;
-    totalWordsRef.current = tokens.filter((t) => /\S/.test(t)).length; // only non-whitespace
+    totalWordsRef.current = totalWords;
     doneWordsRef.current = 0;
 
     idxRef.current = 0;
