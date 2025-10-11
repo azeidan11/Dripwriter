@@ -1,6 +1,6 @@
 import { google } from "googleapis";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "./auth";
 
 import { prisma } from "@/lib/db";
 
@@ -13,10 +13,11 @@ export async function getOAuthFromSession() {
     throw new Error("Unauthorized: no Google access token in session.");
   }
 
+  const redirectUri = new URL("/api/auth/callback/google", process.env.NEXTAUTH_URL!).toString();
   const oAuth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID!,
     process.env.GOOGLE_CLIENT_SECRET!,
-    process.env.NEXTAUTH_URL + "/api/auth/callback/google"
+    redirectUri
   );
 
   oAuth2Client.setCredentials({
