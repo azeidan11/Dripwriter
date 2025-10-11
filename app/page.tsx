@@ -1,9 +1,6 @@
 "use client";
-
-export const dynamic = 'force-static';
-export const revalidate = 0; // or false
 import { useState, useEffect, useRef } from "react";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 
 export default function Home() {
   const [duration, setDuration] = useState<30 | 60>(30); // minutes
