@@ -220,6 +220,8 @@ export default function DashboardPage() {
   // --- Client-side drip MVP (no DB/worker yet) ---
   type DripStatus = "idle" | "running" | "paused" | "done";
   const [dripStatus, setDripStatus] = useState<DripStatus>("idle");
+  // Server-driven drip wiring
+  const [srvSessionId, setSrvSessionId] = useState<string | null>(null);
   const statusRef = useRef<DripStatus>("idle");
   useEffect(() => {
     statusRef.current = dripStatus;
@@ -252,6 +254,30 @@ export default function DashboardPage() {
     napRef.current = Date.now() + dur;
   }
   const [timeLeftMs, setTimeLeftMs] = useState<number>(0);
+  // --- Server drip start ---
+  async function startServerDrip() {
+    if (!signedIn) { setConnectError("Sign in first"); return; }
+    if (!docId) { setConnectError("Connect or create a Google Doc first"); return; }
+    const textTrim = text.trim();
+    if (!textTrim) { setConnectError("Paste some text to drip"); return; }
+
+    try {
+      setDocControlsLocked(true);
+      const res = await fetch("/api/drip/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ docId, text: textTrim, durationMin: duration }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to start");
+      setSrvSessionId(data.sessionId);
+      setDripProgress({ done: 0, total: data.totalWords || 0 });
+      setDripStatus("running");
+    } catch (e: any) {
+      setConnectError(e.message || "Failed to start drip");
+    }
+  }
+
 
   function stopTimer() {
     if (timerRef.current) {
@@ -439,6 +465,38 @@ export default function DashboardPage() {
     }, 1000);
     return () => clearInterval(id);
   }, [dripStatus]);
+  // --- Server drip polling ---
+  useEffect(() => {
+    if (!srvSessionId) return;
+    let cancelled = false;
+    async function poll() {
+      try {
+        const sid = srvSessionId as string; // narrowed by the early return above
+        const r = await fetch(`/api/drip/status?sessionId=${encodeURIComponent(sid)}`);
+        const s = await r.json();
+        if (!r.ok) throw new Error(s.error || "Status error");
+        if (cancelled) return;
+        setDripProgress({ done: Number(s.doneWords || 0), total: Number(s.totalWords || 0) });
+        if (s.status === "DONE") {
+          setDripStatus("done");
+          setSrvSessionId(null);
+          return; // stop
+        }
+        if (s.status === "ERROR") {
+          setConnectError(s.lastError || "Background drip error");
+          setDripStatus("paused");
+          setSrvSessionId(null);
+          return; // stop
+        }
+      } catch (e: any) {
+        // swallow transient errors; UI remains running and retries
+      }
+    }
+    // immediate poll, then interval
+    poll();
+    const id = setInterval(poll, 5000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [srvSessionId]);
 
   const words = useMemo(() => {
     const trimmed = text.trim();
@@ -783,7 +841,7 @@ export default function DashboardPage() {
           {/* Card copied to match landing styles */}
           <div className="relative rounded-3xl border border-white/20 bg-white/80 backdrop-blur-sm shadow-lg p-6">
             <h2 className="text-2xl font-bold mb-4 text-black text-left">Select Duration</h2>
-            <p className="text-sm text-black/70 -mt-1 mb-3">Choose how long the drip will run.</p>
+            <p className="text-sm text-black/70 -mt-1 mb-3">Choose how long the drip will run:</p>
 
             {/* Duration pills - all unlocked except custom "+" */}
             <div>
@@ -1018,9 +1076,20 @@ export default function DashboardPage() {
                     <span className="font-medium">Connected Doc:</span>
                   </span>
                   <a href={docUrl} target="_blank" rel="noreferrer" className="underline">Open in Google Docs</a>
+                  {signedIn && docId && dripStatus === 'idle' && (
+                    <button
+                      type="button"
+                      disabled={appending || !text.trim()}
+                      onClick={() => appendOnce(text.trim().split(/\s+/).slice(0, 12).join(" "))}
+                      className="ml-2 inline-flex items-center rounded-full bg-white text-black px-3 py-1.5 text-xs font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
+                      title="Send a tiny test chunk"
+                    >
+                      {appending ? "Testing…" : "Test Connection"}
+                    </button>
+                  )}
                   {docId && (
                     <span className="inline-flex items-center gap-1">
-                      <span className="text-xs text-black/60">(ID: {docId})</span>
+                      <span className="text-xs text-black/60">(ID: {docId ?? ""})</span>
                       {usedDocLocked && dripStatus === 'idle' && (
                         <button
                           type="button"
@@ -1056,40 +1125,34 @@ export default function DashboardPage() {
                 ) : (
                   <div className="flex items-center gap-3 flex-wrap">
                     {dripStatus === 'idle' && (
-                      <>
-                        <button
-                          type="button"
-                          disabled={!signedIn || !docId || !text.trim()}
-                          onClick={startClientDrip}
-                          className="cursor-pointer rounded-full bg-black text-white px-5 py-2 text-sm font-semibold hover:bg-black/90 disabled:opacity-60 disabled:cursor-not-allowed"
-                        >
-                          Start Dripping (client)
-                        </button>
-                        {/* Keep the single-shot append for debugging */}
-                        <button
-                          type="button"
-                          disabled={!signedIn || !docId || appending || !text.trim()}
-                          onClick={() => appendOnce(text.trim().split(/\s+/).slice(0, 12).join(" "))}
-                          className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
-                        >
-                          {appending ? "Sending Text to your Google Doc..." : "Test Connection"}
-                        </button>
-                      </>
+                      <button
+                        type="button"
+                        disabled={!signedIn || !docId || !text.trim()}
+                        onClick={startServerDrip}
+                        className="cursor-pointer rounded-full bg-black text-white px-6 py-3 text-sm font-semibold shadow hover:bg-black/90 disabled:opacity-85 disabled:cursor-not-allowed whitespace-nowrap"
+                        title={!docId ? 'Connect a Google Doc first' : undefined}
+                      >
+                        Start Dripping
+                      </button>
                     )}
 
                     {dripStatus === 'running' && (
                       <>
                         <button
                           type="button"
+                          disabled
+                          title="Pause for background drips coming soon"
                           onClick={pauseClientDrip}
-                          className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5"
+                          className="cursor-not-allowed rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 opacity-60"
                         >
                           Pause
                         </button>
                         <button
                           type="button"
+                          disabled
+                          title="Cancel for background drips coming soon"
                           onClick={cancelClientDrip}
-                          className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5"
+                          className="cursor-not-allowed rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 opacity-60"
                         >
                           Cancel
                         </button>
@@ -1100,15 +1163,19 @@ export default function DashboardPage() {
                       <>
                         <button
                           type="button"
+                          disabled
+                          title="Resume for background drips coming soon"
                           onClick={resumeClientDrip}
-                          className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5"
+                          className="cursor-not-allowed rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 opacity-60"
                         >
                           Resume
                         </button>
                         <button
                           type="button"
+                          disabled
+                          title="Cancel for background drips coming soon"
                           onClick={cancelClientDrip}
-                          className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5"
+                          className="cursor-not-allowed rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 opacity-60"
                         >
                           Cancel
                         </button>
@@ -1126,10 +1193,11 @@ export default function DashboardPage() {
                       {dripProgress.done}/{dripProgress.total} words (~{Math.round((dripProgress.done / Math.max(1, dripProgress.total)) * 100)}%)
                     </span>
                   )}
-                  {dripStatus === "running" && (
-                    <span>
-                      • ETA: {Math.max(0, Math.ceil(timeLeftMs / 1000))}s left
-                    </span>
+                  {dripStatus === "running" && srvSessionId && (
+                    <span>• Updating…</span>
+                  )}
+                  {dripStatus === "running" && !srvSessionId && (
+                    <span>• ETA: {Math.max(0, Math.ceil(timeLeftMs / 1000))}s left</span>
                   )}
                 </div>
               </div>
