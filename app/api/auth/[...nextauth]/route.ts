@@ -1,6 +1,17 @@
+export const runtime = "nodejs";
+
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/db";
+
+function sleep(ms: number) { return new Promise((r) => setTimeout(r, ms)); }
+async function withRetry<T>(fn: () => Promise<T>, tries = 3, base = 400): Promise<T> {
+  let last: any;
+  for (let i = 0; i < tries; i++) {
+    try { return await fn(); } catch (e) { last = e; if (i < tries - 1) await sleep(base * (i + 1)); }
+  }
+  throw last;
+}
 
 const scopes = [
   "openid",
@@ -25,16 +36,35 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ profile }: any) {
-      const email = profile?.email;
+    async signIn({ user, account, profile }: any) {
+      const email = profile?.email || user?.email;
       if (!email) return false;
-      await prisma.user.upsert({
-        where: { email },
-        update: {
-          name: (profile as any)?.name ?? null,
-        },
-        create: { email, plan: "FREE", name: (profile as any)?.name ?? null },
-      });
+
+      const name = (profile as any)?.name ?? user?.name ?? null;
+      const access = account?.access_token ?? null;
+      const refresh = account?.refresh_token ?? null; // may only arrive on first consent
+      const exp = account?.expires_at ?? null; // seconds epoch
+
+      await withRetry(() =>
+        prisma.user.upsert({
+          where: { email },
+          update: {
+            name,
+            ...(access ? { gAccessToken: access } : {}),
+            ...(exp ? { gAccessTokenExp: Number(exp) } : {}),
+            ...(refresh ? { gRefreshToken: refresh } : {}),
+          },
+          create: {
+            email,
+            plan: "FREE",
+            name,
+            gAccessToken: access,
+            gAccessTokenExp: exp ? Number(exp) : null,
+            gRefreshToken: refresh,
+          },
+        })
+      );
+
       return true;
     },
     async jwt({ token, account }: any) {
@@ -76,6 +106,18 @@ export const authOptions: NextAuthOptions = {
           (token as any).userId = user.id;
           (token as any).plan = user.plan;
         }
+      }
+
+      // Persist latest tokens to DB so background jobs can use them
+      if (token?.email && (token as any)?.accessToken) {
+        const latest: any = {
+          gAccessToken: (token as any).accessToken || null,
+          gAccessTokenExp: (token as any).expiresAt ? Math.floor(Number((token as any).expiresAt) / 1000) : null,
+        };
+        if ((token as any).refreshToken) latest.gRefreshToken = (token as any).refreshToken;
+        try {
+          await prisma.user.update({ where: { email: token.email as string }, data: latest });
+        } catch {}
       }
 
       return token;
