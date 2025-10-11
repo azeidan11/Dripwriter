@@ -64,6 +64,7 @@ model DripSession {
   text        String
   totalWords  Int
   doneWords   Int        @default(0)
+  idx         Int        @default(0)  // token index into the tokenized text
   durationMin Int
   status      DripStatus @default(RUNNING)
   nextAt      DateTime
