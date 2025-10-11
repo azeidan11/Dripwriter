@@ -1,0 +1,49 @@
+export const runtime = "nodejs";
+
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { prisma } from "@/lib/db";
+
+export async function POST(req: Request) {
+  try {
+    const session = await getServerSession(authOptions as any);
+    const userId = (session as any)?.userId as string | undefined;
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const { sessionId } = await req.json();
+    if (!sessionId || typeof sessionId !== "string") {
+      return NextResponse.json({ error: "Missing sessionId" }, { status: 400 });
+    }
+
+    const s = await prisma.dripSession.findUnique({
+      where: { id: sessionId },
+      select: { id: true, userId: true, status: true },
+    });
+    if (!s) return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    if (s.userId !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+    if (s.status === "CANCELED") {
+      return NextResponse.json({ ok: true, status: s.status });
+    }
+
+    // If already done, treat as idempotent cancel (no-op)
+    if (s.status === "DONE") {
+      return NextResponse.json({ ok: true, status: s.status });
+    }
+
+    const updated = await prisma.dripSession.update({
+      where: { id: sessionId },
+      data: {
+        status: "CANCELED",
+        nextAt: null,
+        lastError: null,
+      },
+      select: { status: true },
+    });
+
+    return NextResponse.json({ ok: true, status: updated.status });
+  } catch (err: any) {
+    return NextResponse.json({ error: err?.message ?? "Failed to cancel session" }, { status: 500 });
+  }
+}
