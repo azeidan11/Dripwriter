@@ -21,7 +21,7 @@ const scopes = [
   "https://www.googleapis.com/auth/drive.file",
 ].join(" ");
 
-const authOptions: NextAuthOptions = {
+const handler = NextAuth({
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -73,10 +73,8 @@ const authOptions: NextAuthOptions = {
         token.refreshToken = account.refresh_token; // may arrive only once
         token.expiresAt = Date.now() + account.expires_in * 1000;
       }
-      // still valid?
       if (token.expiresAt && Date.now() < token.expiresAt - 60_000) return token;
 
-      // try refreshing
       if (token.refreshToken) {
         try {
           const res = await fetch("https://oauth2.googleapis.com/token", {
@@ -108,7 +106,6 @@ const authOptions: NextAuthOptions = {
         }
       }
 
-      // Persist latest tokens to DB so background jobs can use them
       if (token?.email && (token as any)?.accessToken) {
         const latest: any = {
           gAccessToken: (token as any).accessToken || null,
@@ -124,7 +121,6 @@ const authOptions: NextAuthOptions = {
     },
     async session({ session, token }: any) {
       try {
-        // Always prefer DB as the source of truth so plan changes reflect immediately
         const email = session?.user?.email as string | undefined;
         if (email) {
           const user = await prisma.user.findUnique({ where: { email } });
@@ -135,7 +131,6 @@ const authOptions: NextAuthOptions = {
               session.user.name = user.name ?? session.user.name ?? null;
             }
           } else {
-            // Fallback to token payload if somehow user is missing
             (session as any).userId = (token as any)?.userId ?? null;
             (session as any).plan = (token as any)?.plan ?? "FREE";
           }
@@ -144,19 +139,16 @@ const authOptions: NextAuthOptions = {
           (session as any).plan = (token as any)?.plan ?? "FREE";
         }
       } catch (err) {
-        // If the DB is unreachable or throws, never break the session endpoint
         console.error("[next-auth][session] error", err);
         (session as any).userId = (token as any)?.userId ?? null;
         (session as any).plan = (token as any)?.plan ?? "FREE";
       }
 
-      // Expose OAuth tokens for server-side Google API calls
       session.accessToken = (token as any)?.accessToken;
       session.refreshToken = (token as any)?.refreshToken;
       return session;
     },
   },
-};
+});
 
-const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
