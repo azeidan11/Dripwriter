@@ -1,6 +1,7 @@
+"use client";
+
 export const dynamic = 'force-static';
 export const revalidate = 0; // or false
-"use client";
 import { useState, useEffect, useRef } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 
