@@ -12,7 +12,18 @@ import { computeNextChunk, tokenizeKeepWhitespace } from "@/lib/dripFormula";
  * - Appends the chunk to Google Docs
  * - Updates idx/doneWords/nextAt/status
  */
-export async function POST() {
+async function processHandler(req: Request) {
+  // Optional hardening: require Vercel Cron or shared secret in production
+  const hdrs = req.headers;
+  const fromCron = hdrs.get("x-vercel-cron") === "1";
+  const auth = hdrs.get("authorization");
+  if (process.env.VERCEL_ENV) {
+    const okBySecret = !!process.env.CRON_SECRET && auth === `Bearer ${process.env.CRON_SECRET}`;
+    if (!fromCron && !okBySecret) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+  }
+
   const now = new Date();
 
   // Pull a small batch to avoid long-running requests
@@ -120,4 +131,12 @@ export async function POST() {
   }
 
   return NextResponse.json({ processed: due.length });
+}
+
+export async function GET(req: Request) {
+  return processHandler(req);
+}
+
+export async function POST(req: Request) {
+  return processHandler(req);
 }
