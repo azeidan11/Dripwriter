@@ -278,6 +278,62 @@ export default function DashboardPage() {
     }
   }
 
+  // --- Server drip controls ---
+  async function pauseServerDrip() {
+    if (!srvSessionId) return;
+    try {
+      const res = await fetch("/api/drip/pause", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: srvSessionId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to pause");
+      setDripStatus("paused");
+      // keep controls locked while paused to avoid switching docs mid-session
+    } catch (e: any) {
+      setConnectError(e.message || "Failed to pause drip");
+    }
+  }
+
+  async function resumeServerDrip() {
+    if (!srvSessionId) return;
+    try {
+      const res = await fetch("/api/drip/resume", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: srvSessionId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to resume");
+      setDripStatus("running");
+      // polling effect continues because srvSessionId remains set
+    } catch (e: any) {
+      setConnectError(e.message || "Failed to resume drip");
+    }
+  }
+
+  async function cancelServerDrip() {
+    if (!srvSessionId) return;
+    try {
+      const res = await fetch("/api/drip/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: srvSessionId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to cancel");
+      setDripStatus("idle");
+      setSrvSessionId(null);
+      setDripProgress({ done: 0, total: 0 });
+      // unlock doc controls so user can edit/reuse link (do not clear docId/docUrl)
+      setDocControlsLocked(false);
+      setUsedDocLocked(false);
+    } catch (e: any) {
+      setConnectError(e.message || "Failed to cancel drip");
+    }
+  }
+
 
   function stopTimer() {
     if (timerRef.current) {
@@ -1140,19 +1196,17 @@ export default function DashboardPage() {
                       <>
                         <button
                           type="button"
-                          disabled
-                          title="Pause for background drips coming soon"
-                          onClick={pauseClientDrip}
-                          className="cursor-not-allowed rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 opacity-60"
+                          onClick={pauseServerDrip}
+                          className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5"
+                          title="Pause background drip"
                         >
                           Pause
                         </button>
                         <button
                           type="button"
-                          disabled
-                          title="Cancel for background drips coming soon"
-                          onClick={cancelClientDrip}
-                          className="cursor-not-allowed rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 opacity-60"
+                          onClick={cancelServerDrip}
+                          className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5"
+                          title="Cancel background drip"
                         >
                           Cancel
                         </button>
@@ -1163,19 +1217,17 @@ export default function DashboardPage() {
                       <>
                         <button
                           type="button"
-                          disabled
-                          title="Resume for background drips coming soon"
-                          onClick={resumeClientDrip}
-                          className="cursor-not-allowed rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 opacity-60"
+                          onClick={resumeServerDrip}
+                          className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5"
+                          title="Resume background drip"
                         >
                           Resume
                         </button>
                         <button
                           type="button"
-                          disabled
-                          title="Cancel for background drips coming soon"
-                          onClick={cancelClientDrip}
-                          className="cursor-not-allowed rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 opacity-60"
+                          onClick={cancelServerDrip}
+                          className="cursor-pointer rounded-full bg-white text-black px-5 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5"
+                          title="Cancel background drip"
                         >
                           Cancel
                         </button>

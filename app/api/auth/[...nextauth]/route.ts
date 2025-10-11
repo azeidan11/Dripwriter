@@ -123,23 +123,30 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }: any) {
-      // Always prefer DB as the source of truth so plan changes reflect immediately
-      const email = session?.user?.email as string | undefined;
-      if (email) {
-        const user = await prisma.user.findUnique({ where: { email } });
-        if (user) {
-          (session as any).userId = user.id;
-          (session as any).plan = user.plan;
-          if (session.user) {
-            session.user.name = user.name ?? session.user.name ?? null;
+      try {
+        // Always prefer DB as the source of truth so plan changes reflect immediately
+        const email = session?.user?.email as string | undefined;
+        if (email) {
+          const user = await prisma.user.findUnique({ where: { email } });
+          if (user) {
+            (session as any).userId = user.id;
+            (session as any).plan = user.plan;
+            if (session.user) {
+              session.user.name = user.name ?? session.user.name ?? null;
+            }
+          } else {
+            // Fallback to token payload if somehow user is missing
+            (session as any).userId = (token as any)?.userId ?? null;
+            (session as any).plan = (token as any)?.plan ?? "FREE";
           }
         } else {
-          // Fallback to token payload if somehow user is missing
-          (session as any).userId = (token as any)?.userId;
+          (session as any).userId = (token as any)?.userId ?? null;
           (session as any).plan = (token as any)?.plan ?? "FREE";
         }
-      } else {
-        (session as any).userId = (token as any)?.userId;
+      } catch (err) {
+        // If the DB is unreachable or throws, never break the session endpoint
+        console.error("[next-auth][session] error", err);
+        (session as any).userId = (token as any)?.userId ?? null;
         (session as any).plan = (token as any)?.plan ?? "FREE";
       }
 
