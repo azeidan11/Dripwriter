@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 
-import NextAuth, { type NextAuthOptions } from "next-auth";
+import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/db";
 
@@ -71,7 +71,8 @@ const handler = NextAuth({
       if (account) {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token; // may arrive only once
-        token.expiresAt = Date.now() + account.expires_in * 1000;
+        const ttl = typeof account.expires_in === "number" ? account.expires_in : 3600; // default 1h if missing
+        token.expiresAt = Date.now() + ttl * 1000;
       }
       if (token.expiresAt && Date.now() < token.expiresAt - 60_000) return token;
 
@@ -88,10 +89,16 @@ const handler = NextAuth({
             }),
           }).then(r => r.json());
 
+          if (!res?.access_token) {
+            throw new Error(`Google token refresh failed: ${res?.error ?? "unknown_error"}`);
+          }
+
           token.accessToken = res.access_token;
-          token.expiresAt = Date.now() + res.expires_in * 1000;
+          const refreshTtl = typeof res.expires_in === "number" ? res.expires_in : 3600;
+          token.expiresAt = Date.now() + refreshTtl * 1000;
           if (res.refresh_token) token.refreshToken = res.refresh_token;
-        } catch {
+        } catch (e) {
+          // Hard reset on failure; session callback will handle user state gracefully
           token.accessToken = undefined;
           token.refreshToken = undefined;
           token.expiresAt = undefined;
