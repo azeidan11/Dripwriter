@@ -1,18 +1,27 @@
+export const runtime = "nodejs";
+
 import { NextResponse } from "next/server";
-import { getOAuthFromSession, createDoc } from "@/lib/google";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { createDocForUser } from "@/lib/google";
 
 export async function POST() {
   try {
-    const oAuth = await getOAuthFromSession();
-    const docId = await createDoc(oAuth, "Dripwriter Draft");
+    const session = await getServerSession(authOptions as any);
+    const userId = (session as any)?.userId as string | undefined;
+    if (!session || !userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const docId = await createDocForUser(userId, "Dripwriter Draft");
     return NextResponse.json({
       docId,
       url: `https://docs.google.com/document/d/${docId}/edit`,
     });
   } catch (e: any) {
     return NextResponse.json(
-      { error: e.message ?? "Failed to create doc" },
-      { status: 401 }
+      { error: e?.message ?? "Failed to create doc" },
+      { status: 500 }
     );
   }
 }
