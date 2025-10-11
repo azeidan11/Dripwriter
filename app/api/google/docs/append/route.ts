@@ -1,8 +1,10 @@
+export const runtime = "nodejs";
+
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/db";
-import { google } from "googleapis";
+import { appendAtEndForUser } from "@/lib/google";
 
 function dateKeyForTZ(tz?: string | null) {
   try {
@@ -82,10 +84,8 @@ export async function POST(req: Request) {
 
   const userId = (session as any).userId as string | undefined;
   const plan = ((session as any).plan as string | undefined) ?? "FREE";
-  const accessToken = (session as any).accessToken as string | undefined;
 
   if (!userId) return NextResponse.json({ error: "Unauthorized: no user id in session" }, { status: 401 });
-  if (!accessToken) return NextResponse.json({ error: "No Google access token" }, { status: 401 });
 
   try {
     const { docId, text } = await req.json();
@@ -141,18 +141,7 @@ export async function POST(req: Request) {
       }
     }
 
-    const auth = new google.auth.OAuth2();
-    auth.setCredentials({ access_token: accessToken });
-    const docs = google.docs({ version: "v1", auth });
-
-    await docs.documents.batchUpdate({
-      documentId: docId,
-      requestBody: {
-        requests: [
-          { insertText: { endOfSegmentLocation: {}, text: allowedText } },
-        ],
-      },
-    });
+    await appendAtEndForUser(userId!, docId, allowedText);
 
     if (plan === "FREE") {
       await prisma.dailyUsage.upsert({
