@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 
@@ -9,7 +11,7 @@ const scopes = [
   "https://www.googleapis.com/auth/drive.file",
 ].join(" ");
 
-export const authOptions = {
+const authOptions = {
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
