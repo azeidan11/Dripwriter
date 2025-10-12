@@ -22,6 +22,8 @@ export async function POST(req: Request) {
 
     const { tokens, totalWords } = tokenizeKeepWhitespace(String(text));
     const startedAt = new Date();
+    // Nudge first run a few seconds ahead so the next cron tick reliably picks it up
+    const nextAt = new Date(startedAt.getTime() + 5_000);
     const endsAt = new Date(startedAt.getTime() + Number(durationMin) * 60_000);
 
     const sessionRow = await prisma.dripSession.create({
@@ -34,12 +36,30 @@ export async function POST(req: Request) {
         idx: 0,
         durationMin: Number(durationMin),
         status: "RUNNING",
-        nextAt: startedAt,
+        nextAt,
         startedAt,
         endsAt,
       },
       select: { id: true, totalWords: true, endsAt: true },
     });
+
+    // Fire-and-forget: kick the processor once so the first chunk can start immediately,
+    // then the Vercel Cron will take over each minute.
+    try {
+      const base =
+        process.env.VERCEL_URL
+          ? `https://${process.env.VERCEL_URL}`
+          : (process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000");
+      // Do not await; we just nudge the worker
+      fetch(`${base}/api/drip/process?kick=1`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${process.env.CRON_SECRET ?? ""}`,
+        },
+        // avoid keeping the route open while this runs
+        cache: "no-store",
+      }).catch(() => {});
+    } catch {}
 
     return NextResponse.json({
       sessionId: sessionRow.id,
