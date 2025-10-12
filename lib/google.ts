@@ -62,6 +62,34 @@ export async function appendAtEnd(oAuth: any, docId: string, text: string) {
  *   await docs.documents.batchUpdate(...)
  */
 
+function epoch() { return Math.floor(Date.now() / 1000); }
+
+async function refreshAccessToken(refreshToken: string): Promise<{ access: string; exp: number; newRefresh?: string }> {
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    throw new Error("Missing GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET env vars");
+  }
+  const body = new URLSearchParams({
+    client_id: process.env.GOOGLE_CLIENT_ID!,
+    client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+    refresh_token: refreshToken,
+    grant_type: "refresh_token",
+  });
+  const resp = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+  if (!resp.ok) {
+    const txt = await resp.text().catch(() => "");
+    throw new Error(`Google token refresh failed (${resp.status}): ${txt}`);
+  }
+  const json: { access_token?: string; expires_in?: number; refresh_token?: string } = await resp.json();
+  if (!json.access_token || !json.expires_in) {
+    throw new Error("Google refresh response missing access_token/expires_in");
+  }
+  return { access: json.access_token, exp: epoch() + Number(json.expires_in), newRefresh: json.refresh_token };
+}
+
 /** Returns an OAuth2 client for a given user with a valid access token. */
 export async function getOAuthForUser(userId: string) {
   const user = await prisma.user.findUnique({
@@ -78,30 +106,34 @@ export async function getOAuthForUser(userId: string) {
     process.env.GOOGLE_CLIENT_SECRET!
   );
 
-  const now = Math.floor(Date.now() / 1000);
+  const skew = 60; // seconds
+  const now = epoch();
   let access = user.gAccessToken ?? undefined;
   let exp = user.gAccessTokenExp ?? 0;
 
-  // Refresh if missing/expired/expiring within 60s
-  if (!access || !exp || exp - now < 60) {
-    // Use deprecated method via any-cast to access credentials shape cleanly
-    const res = await (oauth2 as any).refreshAccessToken();
-    const creds: any = res?.credentials ?? {};
-    const newAccess = typeof creds.access_token === "string" ? creds.access_token : undefined;
-    if (!newAccess) throw new Error("Failed to refresh Google access token.");
-    const newExp = creds.expiry_date ? Math.floor(Number(creds.expiry_date) / 1000) : now + 3600;
-
+  if (!access || !exp || exp - now < skew) {
+    const refreshed = await refreshAccessToken(user.gRefreshToken);
     await prisma.user.update({
       where: { id: userId },
-      data: { gAccessToken: newAccess, gAccessTokenExp: newExp },
+      data: {
+        gAccessToken: refreshed.access,
+        gAccessTokenExp: refreshed.exp,
+        ...(refreshed.newRefresh ? { gRefreshToken: refreshed.newRefresh } : {}),
+      },
     });
-
-    access = newAccess;
-    exp = newExp;
+    access = refreshed.access;
+    exp = refreshed.exp;
   }
 
   oauth2.setCredentials({ access_token: access, refresh_token: user.gRefreshToken });
   return oauth2;
+}
+
+export async function getValidAccessToken(userId: string): Promise<string> {
+  const oauth = await getOAuthForUser(userId);
+  const creds = (oauth as any).credentials || {};
+  if (typeof creds.access_token === "string" && creds.access_token.length > 0) return creds.access_token;
+  throw new Error("No Google access token available after refresh.");
 }
 
 /** Returns a Google Docs client for the given user with a guaranteed-valid token. */
