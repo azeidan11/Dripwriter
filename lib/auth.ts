@@ -1,19 +1,31 @@
 // lib/auth.ts
-import type { NextAuthOptions } from "next-auth";
+import type { NextAuthOptions, Account, Profile, Session } from "next-auth";
+import type { JWT } from "next-auth/jwt";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/db";
 
-function sleep(ms: number) { return new Promise((r) => setTimeout(r, ms)); }
-async function withRetry<T>(fn: () => Promise<T>, tries = 3, base = 400): Promise<T> {
-  let last: unknown;
+/**
+ * Small helpers for resilient DB writes during auth callback.
+ */
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+async function withRetry<T>(fn: () => Promise<T>, tries = 3, base = 300): Promise<T> {
+  let lastErr: unknown;
   for (let i = 0; i < tries; i++) {
-    try { return await fn(); }
-    // eslint-disable-next-line no-empty
-    catch (e) { last = e; if (i < tries - 1) await sleep(base * (i + 1)); }
+    try {
+      return await fn();
+    } catch (e) {
+      lastErr = e;
+      if (i < tries - 1) await sleep(base * (i + 1));
+    }
   }
-  throw last;
+  throw lastErr;
 }
 
+/**
+ * Google scopes we request. Includes Docs + Drive File.
+ */
 const scopes = [
   "openid",
   "email",
@@ -23,6 +35,9 @@ const scopes = [
 ].join(" ");
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
+  session: { strategy: "jwt" },
+
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -36,16 +51,27 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
+
   callbacks: {
-    // Persist user + Google tokens in DB
-    async signIn({ user, account, profile }) {
+    /**
+     * Upsert the user and persist Google tokens on sign-in.
+     */
+    async signIn({
+      user,
+      account,
+      profile,
+    }: {
+      user: { email?: string | null; name?: string | null };
+      account: Account | null;
+      profile?: Profile | null;
+    }) {
       const email = (profile as any)?.email || user?.email;
       if (!email) return false;
 
       const name = (profile as any)?.name ?? user?.name ?? null;
       const access = account?.access_token ?? null;
-      const refresh = account?.refresh_token ?? null; // often only on first consent
-      const exp = account?.expires_at ?? null;        // seconds since epoch
+      const refresh = account?.refresh_token ?? null; // Often only on first consent
+      const exp = account?.expires_at ?? null; // seconds since epoch
 
       await withRetry(() =>
         prisma.user.upsert({
@@ -70,19 +96,43 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
 
-    // Keep short-lived access token in the JWT for client usage (optional)
-    async jwt({ token, account }) {
+    /**
+     * Keep short-lived access token in the JWT for optional client usage,
+     * and refresh it when near expiry. Also hydrate from DB if missing.
+     */
+    async jwt({
+      token,
+      account,
+    }: {
+      token: JWT & { accessToken?: string; refreshToken?: string; expiresAt?: number };
+      account?: Account | null;
+    }) {
+      // Initial sign-in
       if (account) {
-        token.accessToken = account.access_token;
-        token.refreshToken = account.refresh_token;
+        token.accessToken = account.access_token as string | undefined;
+        token.refreshToken = (account.refresh_token as string | undefined) ?? token.refreshToken;
         const ttl = typeof account.expires_in === "number" ? account.expires_in : 3600;
         token.expiresAt = Date.now() + ttl * 1000;
       }
 
-      // If still valid, return as-is
+      // If we don't have a refresh token in the JWT (common on subsequent logins),
+      // hydrate it from the database using the user's email.
+      if (!token.refreshToken && token.email) {
+        const u = await prisma.user.findUnique({
+          where: { email: token.email as string },
+          select: { gRefreshToken: true, gAccessToken: true, gAccessTokenExp: true },
+        });
+        if (u?.gRefreshToken) token.refreshToken = u.gRefreshToken;
+        if (u?.gAccessToken) token.accessToken = u.gAccessToken as string;
+        if (typeof u?.gAccessTokenExp === "number") {
+          token.expiresAt = u.gAccessTokenExp * 1000; // DB stores seconds; JWT uses ms
+        }
+      }
+
+      // If still valid, return as-is (refresh 60s before expiry)
       if (token.expiresAt && Date.now() < (token.expiresAt as number) - 60_000) return token;
 
-      // Try refresh with refresh_token if present
+      // Try to refresh using refresh_token
       if (token.refreshToken) {
         try {
           const res = await fetch("https://oauth2.googleapis.com/token", {
@@ -94,18 +144,31 @@ export const authOptions: NextAuthOptions = {
               grant_type: "refresh_token",
               refresh_token: String(token.refreshToken),
             }),
-          }).then((r) => r.json());
+          }).then((r) => r.json() as Promise<any>);
 
           if (!res?.access_token) {
             throw new Error(`Google token refresh failed: ${res?.error ?? "unknown_error"}`);
           }
-          token.accessToken = res.access_token;
+
+          token.accessToken = res.access_token as string;
           const refreshTtl = typeof res.expires_in === "number" ? res.expires_in : 3600;
           token.expiresAt = Date.now() + refreshTtl * 1000;
-          if (res.refresh_token) token.refreshToken = res.refresh_token;
+          if (res.refresh_token) token.refreshToken = res.refresh_token as string;
+
+          // Persist back to DB (seconds since epoch)
+          if (token.email) {
+            await prisma.user.update({
+              where: { email: token.email as string },
+              data: {
+                gAccessToken: token.accessToken,
+                gAccessTokenExp: Math.floor((token.expiresAt as number) / 1000),
+                ...(res.refresh_token ? { gRefreshToken: token.refreshToken! } : {}),
+              },
+            });
+          }
         } catch {
+          // Invalidate in-JWT access token; leave DB as-is
           token.accessToken = undefined;
-          token.refreshToken = undefined;
           token.expiresAt = undefined;
         }
       }
@@ -113,8 +176,19 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
 
-    // Enrich session with DB-backed fields
-    async session({ session, token }) {
+    /**
+     * Attach server-authoritative fields to session.
+     */
+    async session({
+      session,
+      token,
+    }: {
+      session: Session & { userId?: string | null; plan?: string | null } & {
+        accessToken?: string;
+        refreshToken?: string;
+      };
+      token: JWT & { accessToken?: string; refreshToken?: string; expiresAt?: number };
+    }) {
       try {
         const email = session?.user?.email as string | undefined;
         if (email) {
@@ -136,9 +210,11 @@ export const authOptions: NextAuthOptions = {
         (session as any).plan = (token as any)?.plan ?? "FREE";
       }
 
-      (session as any).accessToken = (token as any)?.accessToken;
-      (session as any).refreshToken = (token as any)?.refreshToken;
+      (session as any).accessToken = token.accessToken;
+      (session as any).refreshToken = token.refreshToken;
       return session;
     },
   },
 };
+
+export default authOptions;

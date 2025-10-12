@@ -6,6 +6,17 @@ import { prisma } from "@/lib/db";
 import { getValidAccessToken } from "@/lib/google"; // your helper that refreshes tokens
 import { google } from "googleapis";
 
+function safeSlice(s: string, n = 1500) { return s.length > n ? s.slice(0, n) : s; }
+function serializeErr(e: unknown) {
+  const anyE = e as any;
+  const base = { message: anyE?.message || String(e) };
+  if (anyE?.response?.data) {
+    return { ...base, google: anyE.response.data };
+  }
+  if (anyE?.stack) return { ...base, stack: String(anyE.stack).split("\n").slice(0, 3).join("\n") };
+  return base;
+}
+
 function nowUtc() { return new Date(); }
 
 export async function GET(req: Request) {
@@ -26,8 +37,8 @@ export async function GET(req: Request) {
   }
 
   const started = Date.now();
-  const processed: any[] = [];
-  const errors: any[] = [];
+  const processed: Array<Record<string, unknown>> = [];
+  const errors: Array<Record<string, unknown>> = [];
 
   try {
     // Pick one job ready to run
@@ -41,7 +52,22 @@ export async function GET(req: Request) {
     });
 
     if (!job) {
-      return NextResponse.json({ ok: true, tookMs: Date.now() - started, processed, note: "no ready jobs" });
+      return NextResponse.json({ ok: true, tookMs: Date.now() - started, processed, note: "no ready jobs", processedCount: 0 });
+    }
+
+    // Try to claim the job to avoid two lambdas working the same session.
+    // We bump nextAt by 60s as a short 'visibility timeout'.
+    const claimUntil = new Date(Date.now() + 60_000);
+    const claimed = await prisma.dripSession.updateMany({
+      where: {
+        id: job.id,
+        status: "RUNNING",
+        ...(forceSession ? {} : { nextAt: { lte: nowUtc() } }),
+      },
+      data: { nextAt: claimUntil },
+    });
+    if (claimed.count === 0) {
+      return NextResponse.json({ ok: true, tookMs: Date.now() - started, processed, note: "race_lost" });
     }
 
     // Safety: if done, mark DONE and bail
@@ -51,7 +77,7 @@ export async function GET(req: Request) {
         data: { status: "DONE", nextAt: undefined, lastError: null },
       });
       processed.push({ id: job.id, action: "mark_done" });
-      return NextResponse.json({ ok: true, tookMs: Date.now() - started, processed });
+      return NextResponse.json({ ok: true, tookMs: Date.now() - started, processed, processedCount: processed.length });
     }
 
     // Compute next chunk size + nextAt from your existing pacing formula.
@@ -106,21 +132,28 @@ export async function GET(req: Request) {
       });
 
       processed.push({ id: job.id, appended: chunkSize, newDone, status: done.status, nextAt: done.nextAt });
-      return NextResponse.json({ ok: true, tookMs: Date.now() - started, processed });
+      return NextResponse.json({ ok: true, tookMs: Date.now() - started, processed, processedCount: processed.length });
 
-    } catch (e: any) {
-      // Persist error so UI can surface it
-      const msg = e?.message || String(e);
-      errors.push({ id: job.id, error: msg });
+    } catch (e: unknown) {
+      const info = serializeErr(e);
+      // If token refresh failed because no refresh token on record, pause this session
+      const msg = (info as any)?.message || "Unknown error";
+      const isNoRefresh = /no refresh token/i.test(String(msg)) || /invalid_grant/i.test(String(msg));
       await prisma.dripSession.update({
         where: { id: job.id },
         data: {
-          lastError: msg,
-          // back off 2–5 min on error to avoid hammering
-          nextAt: new Date(Date.now() + (120 + Math.floor(Math.random()*180)) * 1000),
+          lastError: safeSlice(JSON.stringify(info)),
+          ...(isNoRefresh
+            ? { status: "PAUSED", nextAt: undefined } // require user to re-connect Google
+            : {
+                // back off 2–5 min on other errors to avoid hammering and let transient issues recover
+                nextAt: new Date(Date.now() + (120 + Math.floor(Math.random() * 180)) * 1000),
+              }),
         },
       });
-      return NextResponse.json({ ok: false, tookMs: Date.now() - started, errors }, { status: 500 });
+      errors.push({ id: job.id, error: info });
+      const statusCode = isNoRefresh ? 409 : 500;
+      return NextResponse.json({ ok: false, tookMs: Date.now() - started, errors }, { status: statusCode });
     }
   } catch (e: any) {
     return NextResponse.json({ ok: false, tookMs: Date.now() - started, fatal: e?.message || String(e) }, { status: 500 });
