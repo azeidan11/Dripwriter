@@ -35,7 +35,6 @@ export async function POST(req: Request) {
       where: { id: sessionId },
       data: {
         status: "PAUSED",
-        nextAt: null, // stop scheduling further chunks until resumed
       },
       select: { status: true },
     });
