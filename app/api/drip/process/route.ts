@@ -34,10 +34,29 @@ async function processHandler(req: Request) {
   });
 
   if (due.length === 0) {
+    console.log("[cron] no due sessions at", now.toISOString());
     return NextResponse.json({ processed: 0 });
   }
 
+  console.log("[cron] due:", due.map((d: { id: string; nextAt: Date | null | undefined }) => ({ id: d.id, nextAt: d.nextAt })));
+
   for (const job of due) {
+    // Pre-lock this job so overlapping cron runs don't process it twice.
+    // We optimistically check idx and nextAt to ensure we're the first mover.
+    const lockUntil = new Date(now.getTime() + 30_000); // 30s lock
+    const locked = await prisma.dripSession.updateMany({
+      where: {
+        id: job.id,
+        status: "RUNNING",
+        nextAt: { lte: now },
+        idx: job.idx,
+      },
+      data: { nextAt: lockUntil },
+    });
+    if (locked.count === 0) {
+      // Another invocation already picked it up.
+      continue;
+    }
     try {
       // If we've passed endsAt, finish this job
       if (now.getTime() >= job.endsAt.getTime()) {
@@ -70,7 +89,7 @@ async function processHandler(req: Request) {
       });
 
       // If planner requests a nap, just push nextAt and continue
-      if (plan.napUntil && Date.now() < plan.napUntil) {
+      if (plan.napUntil && now.getTime() < plan.napUntil) {
         await prisma.dripSession.update({
           where: { id: job.id },
           data: { nextAt: new Date(plan.napUntil) },
@@ -82,7 +101,7 @@ async function processHandler(req: Request) {
       if (!plan.chunkText || plan.addedWords === 0) {
         await prisma.dripSession.update({
           where: { id: job.id },
-          data: { nextAt: new Date(Date.now() + 30_000) }, // try again soon
+          data: { nextAt: new Date(now.getTime() + 30_000) }, // try again soon
         });
         continue;
       }
@@ -102,6 +121,7 @@ async function processHandler(req: Request) {
           ],
         },
       });
+      console.log("[cron] appended", { id: job.id, add: plan.addedWords, newIdx: plan.newIdx });
 
       const newDone = Math.min(job.totalWords, job.doneWords + plan.addedWords);
       const finished = newDone >= job.totalWords;
@@ -117,7 +137,7 @@ async function processHandler(req: Request) {
         status: finished ? "DONE" : "RUNNING",
       };
       if (!finished) {
-        updateData.nextAt = new Date(Date.now() + (45_000 + Math.floor(Math.random() * 45_000))); // 45–90s jitter
+        updateData.nextAt = new Date(now.getTime() + (45_000 + Math.floor(Math.random() * 45_000))); // 45–90s jitter
       }
       await prisma.dripSession.update({
         where: { id: job.id },
@@ -125,12 +145,13 @@ async function processHandler(req: Request) {
       });
     } catch (e: any) {
       // Record error and retry later
+      console.error("[cron] error processing", { id: job.id, error: e?.message });
       await prisma.dripSession.update({
         where: { id: job.id },
         data: {
           status: "ERROR",
           lastError: (e?.message || String(e)).slice(0, 500),
-          nextAt: new Date(Date.now() + 60_000), // retry in 60s
+          nextAt: new Date(now.getTime() + 60_000), // retry in 60s
         },
       });
     }
