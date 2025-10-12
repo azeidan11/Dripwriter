@@ -36,7 +36,6 @@ export async function POST(req: Request) {
       where: { id: sessionId },
       data: {
         status: "CANCELED",
-        nextAt: null,
         lastError: null,
       },
       select: { status: true },
