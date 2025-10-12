@@ -49,7 +49,7 @@ export async function POST(req: Request) {
       const base =
         process.env.VERCEL_URL
           ? `https://${process.env.VERCEL_URL}`
-          : (process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000");
+          : (process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3009");
       // Do not await; we just nudge the worker
       fetch(`${base}/api/drip/process?kick=1`, {
         method: "GET",
