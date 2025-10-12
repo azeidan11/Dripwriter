@@ -43,7 +43,7 @@ async function processHandler(req: Request) {
       if (now.getTime() >= job.endsAt.getTime()) {
         await prisma.dripSession.update({
           where: { id: job.id },
-          data: { status: "DONE", nextAt: null },
+          data: { status: "DONE" },
         });
         continue;
       }
@@ -106,16 +106,22 @@ async function processHandler(req: Request) {
       const newDone = Math.min(job.totalWords, job.doneWords + plan.addedWords);
       const finished = newDone >= job.totalWords;
 
+      const updateData: {
+        doneWords: number;
+        idx: number;
+        status: "DONE" | "RUNNING";
+        nextAt?: Date;
+      } = {
+        doneWords: newDone,
+        idx: plan.newIdx,
+        status: finished ? "DONE" : "RUNNING",
+      };
+      if (!finished) {
+        updateData.nextAt = new Date(Date.now() + (45_000 + Math.floor(Math.random() * 45_000))); // 45–90s jitter
+      }
       await prisma.dripSession.update({
         where: { id: job.id },
-        data: {
-          doneWords: newDone,
-          idx: plan.newIdx,
-          status: finished ? "DONE" : "RUNNING",
-          nextAt: finished
-            ? null
-            : new Date(Date.now() + (45_000 + Math.floor(Math.random() * 45_000))), // 45–90s jitter
-        },
+        data: updateData,
       });
     } catch (e: any) {
       // Record error and retry later
