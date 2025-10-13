@@ -23,13 +23,26 @@ export async function GET(req: Request) {
   const kick = url.searchParams.get("kick");
   const dev = url.searchParams.get("dev");
 
+  console.log("[process] entry", { forceSession, kick: !!kick, hasAuth: !!authz, env: process.env.NODE_ENV, origin: url.origin });
+
+  const originOk =
+    typeof process.env.NEXT_PUBLIC_BASE_URL === "string" &&
+    process.env.NEXT_PUBLIC_BASE_URL.length > 0 &&
+    url.origin === process.env.NEXT_PUBLIC_BASE_URL;
+
   // Auth
+  // In production, prefer Authorization: Bearer <CRON_SECRET>.
+  // Additionally, allow same-origin "kick=1" calls (from our own start endpoint) without the header.
   if (process.env.NODE_ENV === "production") {
-    if (authz !== `Bearer ${process.env.CRON_SECRET}`) {
+    const hasBearer = authz === `Bearer ${process.env.CRON_SECRET}`;
+    const allowSameOriginKick = !!kick && originOk;
+    if (!hasBearer && !allowSameOriginKick) {
+      console.warn("[process] unauthorized", { hasBearer, allowSameOriginKick, originOk });
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     }
   } else {
     if (!dev && authz !== `Bearer ${process.env.CRON_SECRET}`) {
+      console.warn("[process] unauthorized (dev)", { hasAuth: !!authz });
       return NextResponse.json({ ok: false, error: "Unauthorized (dev: add ?dev=1)" }, { status: 401 });
     }
   }
@@ -50,7 +63,7 @@ export async function GET(req: Request) {
     });
 
     if (!job) {
-      console.log("[process] no job ready", { forceSession, kick: !!kick });
+      console.log("[process] no job ready", { forceSession, kick: !!kick, originOk });
       return NextResponse.json({ ok: true, note: "no ready jobs", processedCount: 0, tookMs: Date.now() - started });
     }
 
