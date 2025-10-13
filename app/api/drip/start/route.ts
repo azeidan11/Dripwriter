@@ -50,6 +50,8 @@ export async function POST(req: Request) {
       select: { id: true, totalWords: true, endsAt: true },
     });
 
+    console.log("[drip/start] created session", sessionRow.id);
+
     // Kick the processor for THIS session so the first chunk can start immediately
     // 1) Direct in-process call (no network). Then 2) network fallback. Then 3) owner kick.
     try {
@@ -70,8 +72,8 @@ export async function POST(req: Request) {
       if (!(directRes as Response).ok) {
         // --- 2) NETWORK fallback kick ---
         try {
-          const base = process.env.NEXT_PUBLIC_BASE_URL || resolveBaseUrl();
-          const kickUrl = `${base}/api/drip/process?kick=1&sessionId=${encodeURIComponent(sessionRow.id)}`;
+          const origin = new URL(req.url).origin;
+          const kickUrl = `${origin}/api/drip/process?kick=1&sessionId=${encodeURIComponent(sessionRow.id)}`;
           console.log("[drip/start] network kick =>", kickUrl);
 
           const res = await fetch(kickUrl, {
@@ -96,8 +98,8 @@ export async function POST(req: Request) {
       console.error("[drip/start] direct kick error:", (err as Error)?.message || String(err));
       // If the direct path itself throws, still attempt the network fallback
       try {
-        const base = process.env.NEXT_PUBLIC_BASE_URL || resolveBaseUrl();
-        const kickUrl = `${base}/api/drip/process?kick=1&sessionId=${encodeURIComponent(sessionRow.id)}`;
+        const origin = new URL(req.url).origin;
+        const kickUrl = `${origin}/api/drip/process?kick=1&sessionId=${encodeURIComponent(sessionRow.id)}`;
         console.log("[drip/start] network kick (after direct error) =>", kickUrl);
 
         const res = await fetch(kickUrl, {
@@ -117,25 +119,6 @@ export async function POST(req: Request) {
       } catch (err2) {
         console.error("[drip/start] network kick error (after direct error):", (err2 as Error)?.message || String(err2));
       }
-    }
-
-    // 3) Owner kick as a last fallback (no secret; restricted in process route to session owner)
-    try {
-      const base2 = process.env.NEXT_PUBLIC_BASE_URL || resolveBaseUrl();
-      const ownerKickUrl = `${base2}/api/drip/process?owner=1&sessionId=${encodeURIComponent(sessionRow.id)}`;
-
-      // Fire-and-forget; don't block the response
-      fetch(ownerKickUrl, {
-        method: "GET",
-        cache: "no-store",
-      })
-        .then(async (r) => {
-          const b = await r.text().catch(() => "");
-          console.log("[drip/start] owner kick", { status: r.status, body: b.slice(0, 200) });
-        })
-        .catch((e) => console.warn("[drip/start] owner kick error", e?.message || String(e)));
-    } catch (e) {
-      console.warn("[drip/start] owner kick outer error", (e as Error)?.message || String(e));
     }
 
     return NextResponse.json({
