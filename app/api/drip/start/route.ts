@@ -50,52 +50,30 @@ export async function POST(req: Request) {
       select: { id: true, totalWords: true, endsAt: true },
     });
 
-    // Kick the processor for THIS session so the first chunk can start immediately,
-    // then the Vercel Cron will take over each minute.
+    // Kick the processor for THIS session so the first chunk can start immediately
     try {
-      // 1) Inline call: import and invoke the process route handler directly to avoid any networking issues.
-      const inlineUrl = new URL("http://internal.local/api/drip/process");
-      inlineUrl.searchParams.set("kick", "1");
-      inlineUrl.searchParams.set("sessionId", sessionRow.id);
+      const base = process.env.NEXT_PUBLIC_BASE_URL || resolveBaseUrl();
+      const kickUrl = `${base}/api/drip/process?kick=1&sessionId=${encodeURIComponent(sessionRow.id)}`;
 
-      const inlineHeaders = new Headers();
-      if (process.env.CRON_SECRET) {
-        inlineHeaders.set("Authorization", `Bearer ${process.env.CRON_SECRET}`);
-      }
+      console.log("[drip/start] kicking processor at", kickUrl);
 
-      const inlineRes = await processGET(
-        new Request(inlineUrl.toString(), { method: "GET", headers: inlineHeaders })
-      );
-      const inlineBody = await inlineRes.text().catch(() => "");
-      console.log("[drip/start] inline process result", {
-        status: inlineRes.status,
-        body: inlineBody.slice(0, 200),
+      const res = await fetch(kickUrl, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${process.env.CRON_SECRET!}`,
+          "Cache-Control": "no-store",
+        },
+        cache: "no-store",
       });
 
-      // 2) Fire-and-forget external call as a secondary kick (useful in case of separate lambdas/warmers).
-      try {
-        const base = resolveBaseUrl();
-        const headers: Record<string, string> = { "cache-control": "no-store" };
-        if (process.env.CRON_SECRET) {
-          headers["Authorization"] = `Bearer ${process.env.CRON_SECRET}`;
-        }
-        const controller = new AbortController();
-        const kickUrl = `${base}/api/drip/process?kick=1&sessionId=${encodeURIComponent(sessionRow.id)}`;
-        const timeout = setTimeout(() => controller.abort(), 5000);
-        const res = await fetch(kickUrl, { method: "GET", headers, cache: "no-store", signal: controller.signal });
-        clearTimeout(timeout);
-        const text = await res.text().catch(() => "");
-        if (!res.ok) {
-          console.warn("[drip/start] external kick failed", { status: res.status, body: text.slice(0, 200), url: kickUrl });
-        } else {
-          console.log("[drip/start] external kick ok", { status: res.status, url: kickUrl });
-        }
-      } catch (err) {
-        console.warn("[drip/start] external kick error", { message: (err as Error)?.message || String(err) });
+      const bodyText = await res.text().catch(() => "");
+      console.log("[drip/start] kick response", { status: res.status, body: bodyText.slice(0, 300) });
+
+      if (!res.ok) {
+        console.error("[drip/start] processor kick failed", res.status, bodyText.slice(0, 200));
       }
-    } catch (e) {
-      // Non-fatal: cron will pick it up on its own later.
-      console.error("[drip/start] kick outer error", (e as Error)?.message || String(e));
+    } catch (err) {
+      console.error("[drip/start] processor kick error", (err as Error)?.message || String(err));
     }
 
     return NextResponse.json({
