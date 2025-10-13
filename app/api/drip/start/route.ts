@@ -28,8 +28,8 @@ export async function POST(req: Request) {
 
     const { tokens, totalWords } = tokenizeKeepWhitespace(String(text));
     const startedAt = new Date();
-    // Nudge first run a few seconds ahead so the next cron tick reliably picks it up
-    const nextAt = new Date(startedAt.getTime() + 3_000);
+    // Make the first tick eligible immediately so the kick always finds work
+    const nextAt = new Date(startedAt.getTime() - 1_000);
     const endsAt = new Date(startedAt.getTime() + Number(durationMin) * 60_000);
 
     const sessionRow = await prisma.dripSession.create({
@@ -49,26 +49,41 @@ export async function POST(req: Request) {
       select: { id: true, totalWords: true, endsAt: true },
     });
 
-    // Fire-and-forget: kick the processor for THIS session so the first chunk can start immediately,
+    // Kick the processor for THIS session so the first chunk can start immediately,
     // then the Vercel Cron will take over each minute.
     try {
       const base = resolveBaseUrl();
       const headers: Record<string, string> = { "cache-control": "no-store" };
-
-      // In production, /api/drip/process requires CRON_SECRET. If it's missing, the kick will be ignored
-      // but the scheduled cron will still pick it up on the next minute.
       if (process.env.CRON_SECRET) {
         headers["Authorization"] = `Bearer ${process.env.CRON_SECRET}`;
       }
 
-      // Do not await; just nudge the worker and let this request finish fast.
-      fetch(`${base}/api/drip/process?kick=1&sessionId=${encodeURIComponent(sessionRow.id)}`, {
-        method: "GET",
-        headers,
-        cache: "no-store",
-      }).catch(() => {});
+      // Give the kick up to ~1.5s; non-blocking enough, but surfaces auth/base URL issues in logs.
+      const controller = new AbortController();
+      const kickUrl = `${base}/api/drip/process?kick=1&sessionId=${encodeURIComponent(sessionRow.id)}`;
+      const timeout = setTimeout(() => controller.abort(), 1500);
+      try {
+        const res = await fetch(kickUrl, {
+          method: "GET",
+          headers,
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          console.error("[drip/start] kick failed", { status: res.status, body: text.slice(0, 200), url: kickUrl });
+        } else {
+          // Optionally log a tiny breadcrumb so we can confirm kicks in Vercel logs
+          console.log("[drip/start] kick ok", { url: kickUrl });
+        }
+      } catch (err) {
+        clearTimeout(timeout);
+        console.error("[drip/start] kick error", (err as Error)?.message || String(err));
+      }
     } catch (e) {
       // Non-fatal: cron will pick it up on its own later.
+      console.error("[drip/start] kick outer error", (e as Error)?.message || String(e));
     }
 
     return NextResponse.json({
