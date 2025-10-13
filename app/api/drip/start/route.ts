@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { tokenizeKeepWhitespace } from "@/lib/dripFormula";
+import { GET as processGET } from "@/app/api/drip/process/route";
 
 function resolveBaseUrl() {
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
@@ -52,49 +53,45 @@ export async function POST(req: Request) {
     // Kick the processor for THIS session so the first chunk can start immediately,
     // then the Vercel Cron will take over each minute.
     try {
-      const base = resolveBaseUrl();
-      console.log("[drip/start] kicking process", {
-        base: resolveBaseUrl(),
-        hasSecret: !!process.env.CRON_SECRET,
-        env: process.env.NODE_ENV,
-        sessionId: sessionRow.id,
-      });
-      const headers: Record<string, string> = { "cache-control": "no-store" };
+      // 1) Inline call: import and invoke the process route handler directly to avoid any networking issues.
+      const inlineUrl = new URL("http://internal.local/api/drip/process");
+      inlineUrl.searchParams.set("kick", "1");
+      inlineUrl.searchParams.set("sessionId", sessionRow.id);
+
+      const inlineHeaders = new Headers();
       if (process.env.CRON_SECRET) {
-        headers["Authorization"] = `Bearer ${process.env.CRON_SECRET}`;
+        inlineHeaders.set("Authorization", `Bearer ${process.env.CRON_SECRET}`);
       }
 
-      // Give the kick up to ~1.5s; non-blocking enough, but surfaces auth/base URL issues in logs.
-      const controller = new AbortController();
-      const kickUrl = `${base}/api/drip/process?kick=1&sessionId=${encodeURIComponent(sessionRow.id)}`;
-      console.log("[drip/start] kick url", kickUrl);
-      const timeout = setTimeout(() => controller.abort(), 5000);
+      const inlineRes = await processGET(
+        new Request(inlineUrl.toString(), { method: "GET", headers: inlineHeaders })
+      );
+      const inlineBody = await inlineRes.text().catch(() => "");
+      console.log("[drip/start] inline process result", {
+        status: inlineRes.status,
+        body: inlineBody.slice(0, 200),
+      });
+
+      // 2) Fire-and-forget external call as a secondary kick (useful in case of separate lambdas/warmers).
       try {
-        const res = await fetch(kickUrl, {
-          method: "GET",
-          headers,
-          cache: "no-store",
-          signal: controller.signal,
-        });
+        const base = resolveBaseUrl();
+        const headers: Record<string, string> = { "cache-control": "no-store" };
+        if (process.env.CRON_SECRET) {
+          headers["Authorization"] = `Bearer ${process.env.CRON_SECRET}`;
+        }
+        const controller = new AbortController();
+        const kickUrl = `${base}/api/drip/process?kick=1&sessionId=${encodeURIComponent(sessionRow.id)}`;
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        const res = await fetch(kickUrl, { method: "GET", headers, cache: "no-store", signal: controller.signal });
         clearTimeout(timeout);
+        const text = await res.text().catch(() => "");
         if (!res.ok) {
-          const text = await res.text().catch(() => "");
-          console.error("[drip/start] kick failed", {
-            status: res.status,
-            body: text.slice(0, 200),
-            url: kickUrl,
-            base: base,
-          });
+          console.warn("[drip/start] external kick failed", { status: res.status, body: text.slice(0, 200), url: kickUrl });
         } else {
-          // Optionally log a tiny breadcrumb so we can confirm kicks in Vercel logs
-          console.log("[drip/start] kick ok", { url: kickUrl, status: res.status });
+          console.log("[drip/start] external kick ok", { status: res.status, url: kickUrl });
         }
       } catch (err) {
-        clearTimeout(timeout);
-        console.error("[drip/start] kick error", {
-          message: (err as Error)?.message || String(err),
-          base,
-        });
+        console.warn("[drip/start] external kick error", { message: (err as Error)?.message || String(err) });
       }
     } catch (e) {
       // Non-fatal: cron will pick it up on its own later.
