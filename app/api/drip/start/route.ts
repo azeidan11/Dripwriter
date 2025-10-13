@@ -53,6 +53,12 @@ export async function POST(req: Request) {
     // then the Vercel Cron will take over each minute.
     try {
       const base = resolveBaseUrl();
+      console.log("[drip/start] kicking process", {
+        base: resolveBaseUrl(),
+        hasSecret: !!process.env.CRON_SECRET,
+        env: process.env.NODE_ENV,
+        sessionId: sessionRow.id,
+      });
       const headers: Record<string, string> = { "cache-control": "no-store" };
       if (process.env.CRON_SECRET) {
         headers["Authorization"] = `Bearer ${process.env.CRON_SECRET}`;
@@ -61,7 +67,8 @@ export async function POST(req: Request) {
       // Give the kick up to ~1.5s; non-blocking enough, but surfaces auth/base URL issues in logs.
       const controller = new AbortController();
       const kickUrl = `${base}/api/drip/process?kick=1&sessionId=${encodeURIComponent(sessionRow.id)}`;
-      const timeout = setTimeout(() => controller.abort(), 1500);
+      console.log("[drip/start] kick url", kickUrl);
+      const timeout = setTimeout(() => controller.abort(), 5000);
       try {
         const res = await fetch(kickUrl, {
           method: "GET",
@@ -72,14 +79,22 @@ export async function POST(req: Request) {
         clearTimeout(timeout);
         if (!res.ok) {
           const text = await res.text().catch(() => "");
-          console.error("[drip/start] kick failed", { status: res.status, body: text.slice(0, 200), url: kickUrl });
+          console.error("[drip/start] kick failed", {
+            status: res.status,
+            body: text.slice(0, 200),
+            url: kickUrl,
+            base: base,
+          });
         } else {
           // Optionally log a tiny breadcrumb so we can confirm kicks in Vercel logs
-          console.log("[drip/start] kick ok", { url: kickUrl });
+          console.log("[drip/start] kick ok", { url: kickUrl, status: res.status });
         }
       } catch (err) {
         clearTimeout(timeout);
-        console.error("[drip/start] kick error", (err as Error)?.message || String(err));
+        console.error("[drip/start] kick error", {
+          message: (err as Error)?.message || String(err),
+          base,
+        });
       }
     } catch (e) {
       // Non-fatal: cron will pick it up on its own later.
