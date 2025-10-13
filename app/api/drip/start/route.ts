@@ -53,7 +53,7 @@ export async function POST(req: Request) {
     console.log("[drip/start] created session", sessionRow.id);
 
     // Kick the processor for THIS session so the first chunk can start immediately
-    // 1) Direct in-process call (no network). Then 2) network fallback. Then 3) owner kick.
+    // We do both: (1) direct in-process AND (2) network kick (always).
     try {
       // --- 1) DIRECT, in-process kick ---
       const directReq = new Request(
@@ -65,60 +65,52 @@ export async function POST(req: Request) {
         }
       );
       const directRes = await processGET(directReq as any);
-      const directText = await (directRes as Response).text();
-      console.log("[drip/start] direct kick =>", (directRes as Response).status, directText.slice(0, 200));
-
-      // If direct worked, we can skip the network fallback.
-      if (!(directRes as Response).ok) {
-        // --- 2) NETWORK fallback kick ---
-        try {
-          const origin = new URL(req.url).origin;
-          const kickUrl = `${origin}/api/drip/process?kick=1&sessionId=${encodeURIComponent(sessionRow.id)}`;
-          console.log("[drip/start] network kick =>", kickUrl);
-
-          const res = await fetch(kickUrl, {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${process.env.CRON_SECRET ?? ""}`,
-              "Cache-Control": "no-store",
-            },
-            cache: "no-store",
-          });
-
-          const bodyText = await res.text().catch(() => "");
-          console.log("[drip/start] network kick response", res.status, bodyText.slice(0, 300));
-          if (!res.ok) {
-            console.error("[drip/start] processor kick failed", res.status, bodyText.slice(0, 200));
-          }
-        } catch (err) {
-          console.error("[drip/start] network kick error:", (err as Error)?.message || String(err));
-        }
-      }
+      const directText = await (directRes as Response).text().catch(() => "");
+      console.log(
+        "[drip/start] direct kick =>",
+        (directRes as Response).status,
+        directText.slice(0, 200)
+      );
     } catch (err) {
-      console.error("[drip/start] direct kick error:", (err as Error)?.message || String(err));
-      // If the direct path itself throws, still attempt the network fallback
-      try {
-        const origin = new URL(req.url).origin;
-        const kickUrl = `${origin}/api/drip/process?kick=1&sessionId=${encodeURIComponent(sessionRow.id)}`;
-        console.log("[drip/start] network kick (after direct error) =>", kickUrl);
+      console.error(
+        "[drip/start] direct kick error:",
+        (err as Error)?.message || String(err)
+      );
+    }
 
-        const res = await fetch(kickUrl, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${process.env.CRON_SECRET ?? ""}`,
-            "Cache-Control": "no-store",
-          },
-          cache: "no-store",
-        });
+    // --- 2) ALWAYS do a network kick so it shows in Vercel logs ---
+    try {
+      const origin = new URL(req.url).origin; // exact host that handled this request
+      const kickUrl = `${origin}/api/drip/process?kick=1&sessionId=${encodeURIComponent(sessionRow.id)}`;
+      console.log("[drip/start] network kick =>", kickUrl);
 
-        const bodyText = await res.text().catch(() => "");
-        console.log("[drip/start] network kick response", res.status, bodyText.slice(0, 300));
-        if (!res.ok) {
-          console.error("[drip/start] processor kick failed", res.status, bodyText.slice(0, 200));
-        }
-      } catch (err2) {
-        console.error("[drip/start] network kick error (after direct error):", (err2 as Error)?.message || String(err2));
-      }
+      // Fire-and-forget (don’t block the response)
+      fetch(kickUrl, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${process.env.CRON_SECRET ?? ""}`,
+          "Cache-Control": "no-store",
+        },
+        cache: "no-store",
+      })
+        .then(async (r) => {
+          const b = await r.text().catch(() => "");
+          console.log("[drip/start] network kick response", r.status, b.slice(0, 300));
+          if (!r.ok) {
+            console.error("[drip/start] processor kick failed", r.status, b.slice(0, 200));
+          }
+        })
+        .catch((e) =>
+          console.error(
+            "[drip/start] network kick error:",
+            (e as Error)?.message || String(e)
+          )
+        );
+    } catch (err2) {
+      console.error(
+        "[drip/start] network kick outer error:",
+        (err2 as Error)?.message || String(err2)
+      );
     }
 
     return NextResponse.json({
