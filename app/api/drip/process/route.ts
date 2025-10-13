@@ -3,29 +3,27 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getValidAccessToken } from "@/lib/google"; // your helper that refreshes tokens
+import { getValidAccessToken } from "@/lib/google";
 import { google } from "googleapis";
 
 function safeSlice(s: string, n = 1500) { return s.length > n ? s.slice(0, n) : s; }
 function serializeErr(e: unknown) {
   const anyE = e as any;
   const base = { message: anyE?.message || String(e) };
-  if (anyE?.response?.data) {
-    return { ...base, google: anyE.response.data };
-  }
+  if (anyE?.response?.data) return { ...base, google: anyE.response.data };
   if (anyE?.stack) return { ...base, stack: String(anyE.stack).split("\n").slice(0, 3).join("\n") };
   return base;
 }
-
 function nowUtc() { return new Date(); }
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const dev = url.searchParams.get("dev");
-  const forceSession = url.searchParams.get("sessionId"); // handy to process one job
   const authz = req.headers.get("authorization");
+  const forceSession = url.searchParams.get("sessionId");
+  const kick = url.searchParams.get("kick");
+  const dev = url.searchParams.get("dev");
 
-  // Auth: in production, require CRON secret. In dev, allow ?dev=1 to run from your browser.
+  // Auth
   if (process.env.NODE_ENV === "production") {
     if (authz !== `Bearer ${process.env.CRON_SECRET}`) {
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
@@ -41,7 +39,7 @@ export async function GET(req: Request) {
   const errors: Array<Record<string, unknown>> = [];
 
   try {
-    // Pick one job ready to run
+    // Pick a ready job (or a specific one)
     const whereClause: any = forceSession
       ? { id: forceSession }
       : { status: "RUNNING", nextAt: { lte: nowUtc() } };
@@ -52,11 +50,11 @@ export async function GET(req: Request) {
     });
 
     if (!job) {
-      return NextResponse.json({ ok: true, tookMs: Date.now() - started, processed, note: "no ready jobs", processedCount: 0 });
+      console.log("[process] no job ready", { forceSession, kick: !!kick });
+      return NextResponse.json({ ok: true, note: "no ready jobs", processedCount: 0, tookMs: Date.now() - started });
     }
 
-    // Try to claim the job to avoid two lambdas working the same session.
-    // We bump nextAt by 60s as a short 'visibility timeout'.
+    // Claim (visibility timeout)
     const claimUntil = new Date(Date.now() + 60_000);
     const claimed = await prisma.dripSession.updateMany({
       where: {
@@ -67,47 +65,48 @@ export async function GET(req: Request) {
       data: { nextAt: claimUntil },
     });
     if (claimed.count === 0) {
-      return NextResponse.json({ ok: true, tookMs: Date.now() - started, processed, note: "race_lost" });
+      console.log("[process] race_lost", { id: job.id });
+      return NextResponse.json({ ok: true, note: "race_lost", processedCount: 0, tookMs: Date.now() - started });
     }
 
-    // Safety: if done, mark DONE and bail
+    // If already finished, mark DONE and clear scheduling
     if (job.doneWords >= job.totalWords) {
       await prisma.dripSession.update({
         where: { id: job.id },
-        data: { status: "DONE", nextAt: undefined, lastError: null },
+        data: { status: "DONE", nextAt: null, lastError: null },
       });
       processed.push({ id: job.id, action: "mark_done" });
-      return NextResponse.json({ ok: true, tookMs: Date.now() - started, processed, processedCount: processed.length });
+      return NextResponse.json({ ok: true, processed, processedCount: processed.length, tookMs: Date.now() - started });
     }
 
-    // Compute next chunk size + nextAt from your existing pacing formula.
-    // Minimal example: 20–60 words + human-y pause (45–120s).
     const words = job.text.split(/\s+/);
     const remaining = words.slice(job.doneWords);
-    const chunkSize = Math.max(8, Math.min(remaining.length, 20 + Math.floor(Math.random()*40)));
+    const chunkSize = Math.max(8, Math.min(remaining.length, 20 + Math.floor(Math.random() * 40)));
     const chunkText = remaining.slice(0, chunkSize).join(" ");
 
-    // Append to Docs
     try {
-      // Get a valid token for the job’s user
+      // Token for this user
       const user = await prisma.user.findUnique({ where: { id: job.userId } });
       if (!user) throw new Error("User not found for job");
       const accessToken = await getValidAccessToken(user.id);
+      if (!accessToken) throw new Error("No access token available");
 
       const auth = new google.auth.OAuth2();
       auth.setCredentials({ access_token: accessToken });
       const docs = google.docs({ version: "v1", auth });
 
-      // Keep newlines: use insertText ops at end of doc (simple path)
+      // Append at end of document — IMPORTANT: endOfSegmentLocation must be {} (no segmentId)
+      const textToInsert = (job.doneWords === 0 ? "" : " ") + chunkText;
+      console.log("[process] appending", { id: job.id, words: chunkSize });
+
       await docs.documents.batchUpdate({
         documentId: job.docId,
         requestBody: {
           requests: [
             {
               insertText: {
-                // Appends at end of doc
-                text: (job.doneWords === 0 ? "" : " ") + chunkText,
-                endOfSegmentLocation: { segmentId: "" },
+                text: textToInsert,
+                endOfSegmentLocation: {}, // <-- append at end
               },
             },
           ],
@@ -115,8 +114,6 @@ export async function GET(req: Request) {
       });
 
       const newDone = job.doneWords + chunkSize;
-
-      // Schedule next tick with variability
       const pauseSec = 45 + Math.floor(Math.random() * 75); // 45–120s
       const next = new Date(Date.now() + pauseSec * 1000);
 
@@ -124,38 +121,37 @@ export async function GET(req: Request) {
         where: { id: job.id },
         data: {
           doneWords: newDone,
-          nextAt: newDone >= job.totalWords ? undefined : next,
           status: newDone >= job.totalWords ? "DONE" : "RUNNING",
+          nextAt: newDone >= job.totalWords ? null : next, // clear with null when DONE
           lastError: null,
         },
         select: { id: true, doneWords: true, totalWords: true, status: true, nextAt: true },
       });
 
       processed.push({ id: job.id, appended: chunkSize, newDone, status: done.status, nextAt: done.nextAt });
-      return NextResponse.json({ ok: true, tookMs: Date.now() - started, processed, processedCount: processed.length });
+      console.log("[process] append ok", { id: job.id, status: done.status });
+      return NextResponse.json({ ok: true, processed, processedCount: processed.length, tookMs: Date.now() - started });
 
     } catch (e: unknown) {
       const info = serializeErr(e);
-      // If token refresh failed because no refresh token on record, pause this session
       const msg = (info as any)?.message || "Unknown error";
       const isNoRefresh = /no refresh token/i.test(String(msg)) || /invalid_grant/i.test(String(msg));
+
       await prisma.dripSession.update({
         where: { id: job.id },
         data: {
           lastError: safeSlice(JSON.stringify(info)),
           ...(isNoRefresh
-            ? { status: "PAUSED", nextAt: undefined } // require user to re-connect Google
-            : {
-                // back off 2–5 min on other errors to avoid hammering and let transient issues recover
-                nextAt: new Date(Date.now() + (120 + Math.floor(Math.random() * 180)) * 1000),
-              }),
+            ? { status: "PAUSED", nextAt: null } // require user to re-link Google
+            : { nextAt: new Date(Date.now() + (120 + Math.floor(Math.random() * 180)) * 1000) }), // 2–5m backoff
         },
       });
-      errors.push({ id: job.id, error: info });
-      const statusCode = isNoRefresh ? 409 : 500;
-      return NextResponse.json({ ok: false, tookMs: Date.now() - started, errors }, { status: statusCode });
+
+      console.warn("[process] append error", { id: job.id, info });
+      return NextResponse.json({ ok: false, errors: [info], tookMs: Date.now() - started }, { status: isNoRefresh ? 409 : 500 });
     }
   } catch (e: any) {
-    return NextResponse.json({ ok: false, tookMs: Date.now() - started, fatal: e?.message || String(e) }, { status: 500 });
+    console.error("[process] fatal", e?.message || String(e));
+    return NextResponse.json({ ok: false, fatal: e?.message || String(e) }, { status: 500 });
   }
 }
