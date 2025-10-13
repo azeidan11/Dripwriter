@@ -5,7 +5,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { tokenizeKeepWhitespace } from "@/lib/dripFormula";
-import { GET as processGET } from "@/app/api/drip/process/route";
 
 function resolveBaseUrl() {
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
@@ -74,6 +73,25 @@ export async function POST(req: Request) {
       }
     } catch (err) {
       console.error("[drip/start] processor kick error", (err as Error)?.message || String(err));
+    }
+
+    // Owner kick as fallback (no secret; restricted in process route to the session owner)
+    try {
+      const base2 = process.env.NEXT_PUBLIC_BASE_URL || resolveBaseUrl();
+      const ownerKickUrl = `${base2}/api/drip/process?owner=1&sessionId=${encodeURIComponent(sessionRow.id)}`;
+
+      // Fire-and-forget; don't block the response
+      fetch(ownerKickUrl, {
+        method: "GET",
+        cache: "no-store",
+      })
+        .then(async (r) => {
+          const b = await r.text().catch(() => "");
+          console.log("[drip/start] owner kick", { status: r.status, body: b.slice(0, 200) });
+        })
+        .catch((e) => console.warn("[drip/start] owner kick error", e?.message || String(e)));
+    } catch (e) {
+      console.warn("[drip/start] owner kick outer error", (e as Error)?.message || String(e));
     }
 
     return NextResponse.json({
