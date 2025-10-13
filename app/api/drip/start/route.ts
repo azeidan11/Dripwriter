@@ -6,6 +6,12 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { tokenizeKeepWhitespace } from "@/lib/dripFormula";
 
+function resolveBaseUrl() {
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  if (process.env.NEXT_PUBLIC_BASE_URL) return process.env.NEXT_PUBLIC_BASE_URL;
+  return "http://localhost:3009";
+}
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions as any);
@@ -23,7 +29,7 @@ export async function POST(req: Request) {
     const { tokens, totalWords } = tokenizeKeepWhitespace(String(text));
     const startedAt = new Date();
     // Nudge first run a few seconds ahead so the next cron tick reliably picks it up
-    const nextAt = new Date(startedAt.getTime() + 5_000);
+    const nextAt = new Date(startedAt.getTime() + 3_000);
     const endsAt = new Date(startedAt.getTime() + Number(durationMin) * 60_000);
 
     const sessionRow = await prisma.dripSession.create({
@@ -43,23 +49,27 @@ export async function POST(req: Request) {
       select: { id: true, totalWords: true, endsAt: true },
     });
 
-    // Fire-and-forget: kick the processor once so the first chunk can start immediately,
+    // Fire-and-forget: kick the processor for THIS session so the first chunk can start immediately,
     // then the Vercel Cron will take over each minute.
     try {
-      const base =
-        process.env.VERCEL_URL
-          ? `https://${process.env.VERCEL_URL}`
-          : (process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3009");
-      // Do not await; we just nudge the worker
-      fetch(`${base}/api/drip/process?kick=1`, {
+      const base = resolveBaseUrl();
+      const headers: Record<string, string> = { "cache-control": "no-store" };
+
+      // In production, /api/drip/process requires CRON_SECRET. If it's missing, the kick will be ignored
+      // but the scheduled cron will still pick it up on the next minute.
+      if (process.env.CRON_SECRET) {
+        headers["Authorization"] = `Bearer ${process.env.CRON_SECRET}`;
+      }
+
+      // Do not await; just nudge the worker and let this request finish fast.
+      fetch(`${base}/api/drip/process?kick=1&sessionId=${encodeURIComponent(sessionRow.id)}`, {
         method: "GET",
-        headers: {
-          Authorization: `Bearer ${process.env.CRON_SECRET ?? ""}`,
-        },
-        // avoid keeping the route open while this runs
+        headers,
         cache: "no-store",
       }).catch(() => {});
-    } catch {}
+    } catch (e) {
+      // Non-fatal: cron will pick it up on its own later.
+    }
 
     return NextResponse.json({
       sessionId: sessionRow.id,
