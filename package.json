@@ -6,11 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "worker:drip": "tsx --env-file=.env.local worker/drip-worker.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",
+    "bullmq": "^5.61.0",
     "googleapis": "^159.0.0",
+    "ioredis": "^5.8.1",
     "next": "15.5.2",
     "next-auth": "^4.24.11",
     "prisma": "^6.16.2",
@@ -26,6 +29,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.2",
     "tailwindcss": "^4",
+    "tsx": "^4.20.6",
     "typescript": "^5"
   }
 }
