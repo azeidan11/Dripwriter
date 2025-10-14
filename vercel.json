@@ -10,12 +10,6 @@
       "dest": "/$1"
     }
   ],
-  "crons": [
-    {
-      "path": "/api/drip/process",
-      "schedule": "*/1 * * * *"
-    }
-  ],
   "env": {
     "NEXT_TELEMETRY_DISABLED": "1"
   }
