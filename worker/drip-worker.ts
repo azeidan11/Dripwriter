@@ -124,7 +124,7 @@ const worker = new Worker(
       console.log("[worker] session already complete", session.id);
       await prisma.dripSession.update({
         where: { id: session.id },
-        data: { status: "DONE", nextAt: null, lastError: null },
+        data: { status: "DONE", lastError: null },
       });
       return;
     }
@@ -151,14 +151,17 @@ const worker = new Worker(
       const pauseSec = 45 + Math.floor(Math.random() * 75); // 45–120s
       const nextAt = newDone >= session.totalWords ? null : new Date(Date.now() + pauseSec * 1000);
 
+      const updateData: any = {
+        doneWords: newDone,
+        status: newDone >= session.totalWords ? "DONE" : "RUNNING",
+        lastError: null,
+      };
+      if (nextAt) {
+        updateData.nextAt = nextAt;
+      }
       await prisma.dripSession.update({
         where: { id: session.id },
-        data: {
-          doneWords: newDone,
-          status: newDone >= session.totalWords ? "DONE" : "RUNNING",
-          nextAt,
-          lastError: null,
-        },
+        data: updateData,
       });
 
       if (nextAt) {
@@ -177,7 +180,7 @@ const worker = new Worker(
         data: {
           lastError: safeSlice(JSON.stringify(info)),
           ...(isNoRefresh
-            ? { status: "PAUSED", nextAt: null }
+            ? { status: "PAUSED" }
             : { nextAt: new Date(Date.now() + (120 + Math.floor(Math.random() * 180)) * 1000) }),
         },
       });
