@@ -54,7 +54,7 @@ async function appendToGoogleDoc(docId: string, text: string, accessToken: strin
         {
           insertText: {
             text: (prefixSpace ? " " : "") + text,
-            endOfSegmentLocation: { segmentId: "" }, // append at end
+            endOfSegmentLocation: {}, // append at end
           },
         },
       ],
@@ -175,7 +175,11 @@ const worker = new Worker(
       throw e;
     }
   },
-  { connection: redis, concurrency: CONCURRENCY }
+  {
+    connection: redis,
+    concurrency: CONCURRENCY,
+    prefix: "{dripwriter}", // MUST match the prefix used when creating the Queue in lib/queue.ts
+  }
 );
 
 worker.on("ready", () => console.log("[worker] ready and connected to Redis"));

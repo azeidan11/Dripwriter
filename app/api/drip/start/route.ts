@@ -7,6 +7,16 @@ import { prisma } from "@/lib/db";
 import { tokenizeKeepWhitespace } from "@/lib/dripFormula";
 import { enqueueDrip } from "@/lib/queue";
 
+type StartBody = {
+  docId?: string;
+  text?: string;
+  durationMin?: number | string;
+};
+
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n));
+}
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions as any);
@@ -16,40 +26,75 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { docId, text, durationMin } = await req.json();
-    if (!docId || !text || !durationMin) {
-      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+    let body: StartBody;
+    try {
+      body = (await req.json()) as StartBody;
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
 
-    const { tokens, totalWords } = tokenizeKeepWhitespace(String(text));
+    const rawDocId = String(body?.docId ?? "").trim();
+    const rawText = String(body?.text ?? "");
+    const durationMinNum = clamp(
+      Number(body?.durationMin ?? 0),
+      1,    // at least 1 minute
+      24 * 60 // at most 24h
+    );
+
+    if (!rawDocId) {
+      return NextResponse.json({ error: "Missing docId" }, { status: 400 });
+    }
+    if (!rawText) {
+      return NextResponse.json({ error: "Missing text" }, { status: 400 });
+    }
+    if (!Number.isFinite(durationMinNum)) {
+      return NextResponse.json({ error: "Missing or invalid durationMin" }, { status: 400 });
+    }
+
+    // Tokenize and count words with your existing formula/util
+    const { tokens, totalWords } = tokenizeKeepWhitespace(rawText);
+
+    if (!totalWords || totalWords <= 0) {
+      return NextResponse.json({ error: "No words to drip" }, { status: 400 });
+    }
+
     const startedAt = new Date();
-    // Make the first tick eligible immediately so the kick always finds work
+    // Make the first tick eligible immediately so the worker always finds it
     const nextAt = new Date(startedAt.getTime() - 1_000);
-    const endsAt = new Date(startedAt.getTime() + Number(durationMin) * 60_000);
+    const endsAt = new Date(startedAt.getTime() + durationMinNum * 60_000);
 
     const sessionRow = await prisma.dripSession.create({
       data: {
         userId,
-        docId: String(docId),
-        text: String(text),
+        docId: rawDocId,
+        text: rawText,
         totalWords,
         doneWords: 0,
         idx: 0,
-        durationMin: Number(durationMin),
+        durationMin: durationMinNum,
         status: "RUNNING",
         nextAt,
         startedAt,
         endsAt,
+        lastError: null,
       },
       select: { id: true, totalWords: true, endsAt: true },
     });
 
-    console.log("[drip/start] created session", sessionRow.id);
+    console.log("[drip/start] created session", { id: sessionRow.id, totalWords });
 
     // Enqueue first job for the BullMQ worker (Upstash Redis)
-    await enqueueDrip({ sessionId: sessionRow.id }, { delay: 500 });
-    console.log("[drip/start] first job enqueued", { sessionId: sessionRow.id });
-    console.log("[drip/start] enqueued job for session", sessionRow.id);
+    try {
+      await enqueueDrip({ sessionId: sessionRow.id }, { delay: 500 });
+      console.log("[drip/start] first job enqueued", { sessionId: sessionRow.id });
+    } catch (e) {
+      console.error("[drip/start] enqueue failed", e);
+      // Surface enqueue problems to the client so we can see it in the UI
+      return NextResponse.json(
+        { error: "Failed to enqueue first job", details: (e as any)?.message ?? String(e) },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       sessionId: sessionRow.id,
