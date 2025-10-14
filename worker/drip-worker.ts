@@ -1,7 +1,7 @@
 // worker/drip-worker.ts
 // Long-lived BullMQ worker that performs one "drip" chunk per job.
 
-import { Worker, JobsOptions } from "bullmq";
+import { Worker } from "bullmq";
 import IORedis from "ioredis";
 import { google } from "googleapis";
 
@@ -22,10 +22,29 @@ if (!REDIS_URL) {
   throw new Error("REDIS_URL is missing");
 }
 
+
 const redis = new IORedis(REDIS_URL, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
 });
+
+function redisHostFromUrl(u: string) {
+  try {
+    const url = new URL(u);
+    return `${url.hostname}:${url.port || "6379"}`;
+  } catch {
+    return "(unparsable REDIS_URL)";
+  }
+}
+
+console.log(
+  "[worker:init]",
+  JSON.stringify({
+    queueName: QUEUE_NAME,
+    prefix: "{dripwriter}",
+    redis: redisHostFromUrl(REDIS_URL!),
+  })
+);
 
 // -----------------------------------------
 // Utility
@@ -54,7 +73,7 @@ async function appendToGoogleDoc(docId: string, text: string, accessToken: strin
         {
           insertText: {
             text: (prefixSpace ? " " : "") + text,
-            endOfSegmentLocation: {}, // append at end
+            endOfSegmentLocation: { segmentId: "" }, // append at end (explicit)
           },
         },
       ],
@@ -181,6 +200,17 @@ const worker = new Worker(
     prefix: "{dripwriter}", // MUST match the prefix used when creating the Queue in lib/queue.ts
   }
 );
+
+worker.on("error", (err) => {
+  console.error("[worker] runtime error:", err?.message || String(err));
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("[worker] unhandledRejection:", reason);
+});
+process.on("uncaughtException", (err) => {
+  console.error("[worker] uncaughtException:", err?.message || String(err));
+});
 
 worker.on("ready", () => console.log("[worker] ready and connected to Redis"));
 worker.on("completed", (job) => console.log("[worker] completed", job.id));
