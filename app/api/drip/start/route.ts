@@ -1,3 +1,4 @@
+// app/api/drip/start/route.ts
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
@@ -5,7 +6,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { tokenizeKeepWhitespace } from "@/lib/dripFormula";
-import { enqueueDrip } from "@/lib/queue";
+import { enqueueDrip, pingQueue } from "@/lib/queue";
 
 type StartBody = {
   docId?: string;
@@ -35,31 +36,21 @@ export async function POST(req: Request) {
 
     const rawDocId = String(body?.docId ?? "").trim();
     const rawText = String(body?.text ?? "");
-    const durationMinNum = clamp(
-      Number(body?.durationMin ?? 0),
-      1,    // at least 1 minute
-      24 * 60 // at most 24h
-    );
+    const durationMinNum = clamp(Number(body?.durationMin ?? 0), 1, 24 * 60);
 
-    if (!rawDocId) {
-      return NextResponse.json({ error: "Missing docId" }, { status: 400 });
-    }
-    if (!rawText) {
-      return NextResponse.json({ error: "Missing text" }, { status: 400 });
-    }
+    if (!rawDocId) return NextResponse.json({ error: "Missing docId" }, { status: 400 });
+    if (!rawText) return NextResponse.json({ error: "Missing text" }, { status: 400 });
     if (!Number.isFinite(durationMinNum)) {
       return NextResponse.json({ error: "Missing or invalid durationMin" }, { status: 400 });
     }
 
-    // Tokenize and count words with your existing formula/util
-    const { tokens, totalWords } = tokenizeKeepWhitespace(rawText);
-
+    const { totalWords } = tokenizeKeepWhitespace(rawText);
     if (!totalWords || totalWords <= 0) {
       return NextResponse.json({ error: "No words to drip" }, { status: 400 });
     }
 
     const startedAt = new Date();
-    // Make the first tick eligible immediately so the worker always finds it
+    // Make FIRST tick eligible immediately so worker can pick it up
     const nextAt = new Date(startedAt.getTime() - 1_000);
     const endsAt = new Date(startedAt.getTime() + durationMinNum * 60_000);
 
@@ -78,38 +69,45 @@ export async function POST(req: Request) {
         endsAt,
         lastError: null,
       },
-      select: { id: true, totalWords: true, endsAt: true },
+      select: { id: true, totalWords: true, endsAt: true, nextAt: true },
     });
 
-    console.log("[drip/start] created session", { id: sessionRow.id, totalWords });
+    console.log("[drip/start] created session", sessionRow);
 
-    // Enqueue first job for the BullMQ worker (Upstash Redis)
+    // PROVE Redis connectivity in this lambda
+    let ping: string | null = null;
     try {
-      const jobId = `${sessionRow.id}-first`;
-      await enqueueDrip({ sessionId: sessionRow.id }, { delay: 500, jobId });
-      console.log("[drip/start] first job enqueued", { sessionId: sessionRow.id, jobId, delay: 500 });
+      ping = await pingQueue(); // expect "PONG"
     } catch (e: any) {
-      // If a duplicate request happened very quickly, it's possible the first job already exists.
-      // Treat "job already exists" as success so UX doesn't get stuck.
-      const msg = e?.message || String(e);
-      if (/job.*already exists/i.test(msg)) {
-        console.warn("[drip/start] first job already existed, continuing", { sessionId: sessionRow.id });
-      } else {
-        console.error("[drip/start] enqueue failed", e);
-        return NextResponse.json(
-          { error: "Failed to enqueue first job", details: msg },
-          { status: 500 }
-        );
-      }
+      console.error("[drip/start] pingQueue failed:", e?.message || String(e));
+    }
+
+    // Enqueue first job for BullMQ worker (Upstash Redis)
+    let enqId: string | null = null;
+    try {
+      const job = await enqueueDrip({ sessionId: sessionRow.id }, { delay: 250, jobId: `${sessionRow.id}-first` });
+      enqId = String(job.id);
+      console.log("[drip/start] first job enqueued", { jobId: enqId, sessionId: sessionRow.id });
+    } catch (e) {
+      console.error("[drip/start] enqueue failed", e);
+      return NextResponse.json(
+        {
+          error: "Failed to enqueue first job",
+          sessionId: sessionRow.id,
+          ping,
+          details: (e as any)?.message ?? String(e),
+        },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
       sessionId: sessionRow.id,
       totalWords: sessionRow.totalWords,
       endsAt: sessionRow.endsAt,
-      enqueued: true,
-      jobId: `${sessionRow.id}-first`,
-      enqueuedDelayMs: 500,
+      nextAt: sessionRow.nextAt,
+      enqueuedJobId: enqId,
+      ping, // should be "PONG" in prod
     });
   } catch (err: any) {
     console.error("Error starting drip session:", err);
