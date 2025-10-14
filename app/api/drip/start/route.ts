@@ -47,9 +47,8 @@ export async function POST(req: Request) {
     console.log("[drip/start] created session", sessionRow.id);
 
     // Enqueue first job for the BullMQ worker (Upstash Redis)
-    await enqueueDrip({
-      sessionId: sessionRow.id,
-    });
+    await enqueueDrip({ sessionId: sessionRow.id }, { delay: 500 });
+    console.log("[drip/start] first job enqueued", { sessionId: sessionRow.id });
     console.log("[drip/start] enqueued job for session", sessionRow.id);
 
     return NextResponse.json({

@@ -96,7 +96,7 @@ const worker = new Worker(
     if (session.nextAt && session.nextAt.getTime() > Date.now() + 5_000) {
       const delayMs = Math.max(0, session.nextAt.getTime() - Date.now());
       console.log("[worker] session scheduled in future, delaying", delayMs, "ms");
-      await enqueueDrip({ sessionId }, { delayMs, jobId: `${sessionId}-next` });
+      await enqueueDrip({ sessionId }, { delay: delayMs, jobId: `${sessionId}-next` });
       return;
     }
 
@@ -145,7 +145,7 @@ const worker = new Worker(
       if (nextAt) {
         const delayMs = Math.max(0, nextAt.getTime() - Date.now());
         console.log(`[worker] requeueing next job for ${session.id} in ${delayMs} ms`);
-        await enqueueDrip({ sessionId }, { delayMs, jobId: `${sessionId}-next` });
+        await enqueueDrip({ sessionId }, { delay: delayMs, jobId: `${sessionId}-next` });
       }
     } catch (e: any) {
       console.error("[worker] error while appending", e);
@@ -168,7 +168,7 @@ const worker = new Worker(
         if (s2?.nextAt) {
           const delayMs = Math.max(0, s2.nextAt.getTime() - Date.now());
           console.log("[worker] scheduling retry for", session.id, "in", delayMs, "ms");
-          await enqueueDrip({ sessionId }, { delayMs, jobId: `${sessionId}-next` });
+          await enqueueDrip({ sessionId }, { delay: delayMs, jobId: `${sessionId}-next` });
         }
       }
 
