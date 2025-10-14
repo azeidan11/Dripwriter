@@ -85,15 +85,22 @@ export async function POST(req: Request) {
 
     // Enqueue first job for the BullMQ worker (Upstash Redis)
     try {
-      await enqueueDrip({ sessionId: sessionRow.id }, { delay: 500 });
-      console.log("[drip/start] first job enqueued", { sessionId: sessionRow.id });
-    } catch (e) {
-      console.error("[drip/start] enqueue failed", e);
-      // Surface enqueue problems to the client so we can see it in the UI
-      return NextResponse.json(
-        { error: "Failed to enqueue first job", details: (e as any)?.message ?? String(e) },
-        { status: 500 }
-      );
+      const jobId = `${sessionRow.id}-first`;
+      await enqueueDrip({ sessionId: sessionRow.id }, { delay: 500, jobId });
+      console.log("[drip/start] first job enqueued", { sessionId: sessionRow.id, jobId, delay: 500 });
+    } catch (e: any) {
+      // If a duplicate request happened very quickly, it's possible the first job already exists.
+      // Treat "job already exists" as success so UX doesn't get stuck.
+      const msg = e?.message || String(e);
+      if (/job.*already exists/i.test(msg)) {
+        console.warn("[drip/start] first job already existed, continuing", { sessionId: sessionRow.id });
+      } else {
+        console.error("[drip/start] enqueue failed", e);
+        return NextResponse.json(
+          { error: "Failed to enqueue first job", details: msg },
+          { status: 500 }
+        );
+      }
     }
 
     return NextResponse.json({
@@ -101,6 +108,8 @@ export async function POST(req: Request) {
       totalWords: sessionRow.totalWords,
       endsAt: sessionRow.endsAt,
       enqueued: true,
+      jobId: `${sessionRow.id}-first`,
+      enqueuedDelayMs: 500,
     });
   } catch (err: any) {
     console.error("Error starting drip session:", err);
