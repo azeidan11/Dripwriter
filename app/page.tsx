@@ -237,7 +237,7 @@ export default function Home() {
           <div className="size-8 rounded-xl bg-white/10 backdrop-blur-sm grid place-items-center">
             <span className="text-sm font-semibold">DW</span>
           </div>
-          <span className="text-lg font-semibold tracking-tight">Dripwriter</span>
+          <span className="text-lg font-semibold tracking-tight">Dripwriters</span>
         </a>
         <nav className="hidden md:flex items-center gap-6 text-sm text-white/80">
           <a className="hover:text-white text-base" href="#features">Features</a>
