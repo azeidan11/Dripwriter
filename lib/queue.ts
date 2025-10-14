@@ -55,6 +55,16 @@ export async function enqueueDrip(
   return job;
 }
 
+export function describeQueue() {
+  return {
+    ping: connection.status === "ready" ? "PONG" : connection.status,
+    queue: QUEUE_NAME,
+    prefix: "{dripwriter}",
+    redis: (connection as any)?.connector?.options?.host ??
+           process.env.REDIS_URL?.replace(/^.*@/,'').replace(/\/\d+$/,''),
+  };
+}
+
 // NEW: simple ping you can call from API routes to verify Redis connectivity at runtime
 export async function pingQueue(): Promise<string> {
   return connection.ping();
