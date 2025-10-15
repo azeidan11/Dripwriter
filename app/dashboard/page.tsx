@@ -1,7 +1,7 @@
 "use client";
 
 // app/dashboard/page.tsx
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useTransition } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { tokenizeKeepWhitespace, computeNextChunk } from "@/lib/dripFormula";
 
@@ -75,6 +75,7 @@ function nextDurationSuggestion(words: number, plan: Plan, current: Duration): D
   }
 
 export default function DashboardPage() {
+  const [isPending, startTransition] = useTransition();
   const { data: session } = useSession();
   const signedIn = !!session;
 
@@ -126,6 +127,9 @@ export default function DashboardPage() {
   const [docInputOpen, setDocInputOpen] = useState(false);
   const [usedDocLocked, setUsedDocLocked] = useState(false);
   const [docControlsLocked, setDocControlsLocked] = useState(false);
+
+  // UI state for "Start Dripping" button
+  const [starting, setStarting] = useState(false);
 
   // --- Daily usage (for Free caps) ---
   const [usage, setUsage] = useState<{
@@ -255,12 +259,10 @@ export default function DashboardPage() {
   }
   const [timeLeftMs, setTimeLeftMs] = useState<number>(0);
   // ---- Server-driven countdown (from /api/drip/status) ----
-  const [uiNextMs, setUiNextMs] = useState<number>(0);
-  const [uiEtaMs, setUiEtaMs] = useState<number>(0);
   const nextMsRef = useRef<number>(0);
   const etaMsRef = useRef<number>(0);
-  const uiNextRef = useRef<number>(0);
-  const uiEtaRef = useRef<number>(0);
+  const etaTextRef = useRef<HTMLSpanElement | null>(null);
+  const nextTextRef = useRef<HTMLSpanElement | null>(null);
   // --- Server drip start ---
   async function startServerDrip() {
     if (!signedIn) { setConnectError("Sign in first"); return; }
@@ -269,7 +271,8 @@ export default function DashboardPage() {
     if (!textTrim) { setConnectError("Paste some text to drip"); return; }
 
     try {
-      setDocControlsLocked(true);
+      setStarting(true);
+      startTransition(() => setDocControlsLocked(true));
       const res = await fetch("/api/drip/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -282,6 +285,8 @@ export default function DashboardPage() {
       setDripStatus("running");
     } catch (e: any) {
       setConnectError(e.message || "Failed to start drip");
+    } finally {
+      setStarting(false);
     }
   }
 
@@ -296,7 +301,7 @@ export default function DashboardPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to pause");
-      setDripStatus("paused");
+      startTransition(() => setDripStatus("paused"));
       // keep controls locked while paused to avoid switching docs mid-session
     } catch (e: any) {
       setConnectError(e.message || "Failed to pause drip");
@@ -313,7 +318,7 @@ export default function DashboardPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to resume");
-      setDripStatus("running");
+      startTransition(() => setDripStatus("running"));
       // polling effect continues because srvSessionId remains set
     } catch (e: any) {
       setConnectError(e.message || "Failed to resume drip");
@@ -330,12 +335,14 @@ export default function DashboardPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to cancel");
-      setDripStatus("idle");
-      setSrvSessionId(null);
-      setDripProgress({ done: 0, total: 0 });
-      // unlock doc controls so user can edit/reuse link (do not clear docId/docUrl)
-      setDocControlsLocked(false);
-      setUsedDocLocked(false);
+      startTransition(() => {
+        setDripStatus("idle");
+        setSrvSessionId(null);
+        setDripProgress({ done: 0, total: 0 });
+        // unlock doc controls so user can edit/reuse link (do not clear docId/docUrl)
+        setDocControlsLocked(false);
+        setUsedDocLocked(false);
+      });
     } catch (e: any) {
       setConnectError(e.message || "Failed to cancel drip");
     }
@@ -535,12 +542,13 @@ export default function DashboardPage() {
     if (dripStatus !== "running") return;
     setTimeLeftMs(Math.max(0, endsAtRef.current - Date.now()));
     const id = setInterval(() => {
-      setTimeLeftMs(Math.max(0, endsAtRef.current - Date.now()));
+      const v = Math.max(0, endsAtRef.current - Date.now());
+      setTimeLeftMs((prev) => (prev !== v ? v : prev));
     }, 1000);
     return () => clearInterval(id);
   }, [dripStatus]);
 
-  // Server countdown ticker (driven by refs populated from /api/drip/status)
+  // Server countdown ticker (imperative — no React re-render per second)
   useEffect(() => {
     if (!srvSessionId || dripStatus !== "running") return;
     const id = setInterval(() => {
@@ -548,19 +556,9 @@ export default function DashboardPage() {
       const newEta = Math.max(0, etaMsRef.current - 1000);
       nextMsRef.current = newNext;
       etaMsRef.current = newEta;
-
-      if (uiNextRef.current !== newNext) {
-        setUiNextMs(newNext);
-        uiNextRef.current = newNext;
-      }
-      if (uiEtaRef.current !== newEta) {
-        setUiEtaMs(newEta);
-        uiEtaRef.current = newEta;
-      }
-
-      if (newNext === 0 && newEta === 0) {
-        clearInterval(id);
-      }
+      if (etaTextRef.current) etaTextRef.current.textContent = fmtMs(newEta);
+      if (nextTextRef.current) nextTextRef.current.textContent = fmtMs(newNext);
+      if (newNext === 0 && newEta === 0) clearInterval(id);
     }, 1000);
     return () => clearInterval(id);
   }, [srvSessionId, dripStatus]);
@@ -585,18 +583,12 @@ export default function DashboardPage() {
         // Initialize/refresh server-driven countdowns if provided
         if (typeof s.nextInMs === "number") {
           nextMsRef.current = Math.max(0, Number(s.nextInMs));
-          if (uiNextRef.current !== nextMsRef.current) {
-            setUiNextMs(nextMsRef.current);
-            uiNextRef.current = nextMsRef.current;
-          }
         }
         if (typeof s.endsInMs === "number") {
           etaMsRef.current = Math.max(0, Number(s.endsInMs));
-          if (uiEtaRef.current !== etaMsRef.current) {
-            setUiEtaMs(etaMsRef.current);
-            uiEtaRef.current = etaMsRef.current;
-          }
         }
+        if (etaTextRef.current) etaTextRef.current.textContent = fmtMs(etaMsRef.current);
+        if (nextTextRef.current) nextTextRef.current.textContent = fmtMs(nextMsRef.current);
 
         if (s.status === "DONE") {
           setDripStatus("done");
@@ -1248,12 +1240,12 @@ export default function DashboardPage() {
                     {dripStatus === 'idle' && (
                       <button
                         type="button"
-                        disabled={!signedIn || !docId || !text.trim()}
+                        disabled={!signedIn || !docId || !text.trim() || starting}
                         onClick={startServerDrip}
                         className="cursor-pointer rounded-full bg-black text-white px-6 py-3 text-sm font-semibold shadow hover:bg-black/90 disabled:opacity-85 disabled:cursor-not-allowed whitespace-nowrap"
                         title={!docId ? 'Connect a Google Doc first' : undefined}
                       >
-                        Start Dripping
+                        {starting ? "Starting Drip…" : "Start Dripping"}
                       </button>
                     )}
 
@@ -1311,10 +1303,10 @@ export default function DashboardPage() {
                     </span>
                   )}
                   {dripStatus === "running" && srvSessionId && (
-                    <span>• ETA {fmtMs(uiEtaMs)} - next chunk in {fmtMs(uiNextMs)}</span>
+                    <span>• ETA <span ref={etaTextRef}>--</span> - next chunk in <span ref={nextTextRef}>--</span></span>
                   )}
                   {dripStatus === "running" && !srvSessionId && (
-                    <span>• ETA: {Math.max(0, Math.ceil(timeLeftMs / 1000))}s left</span>
+                    <span>• ETA: {fmtMs(timeLeftMs)} left</span>
                   )}
                 </div>
               </div>
