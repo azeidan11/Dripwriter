@@ -1,202 +1,156 @@
 "use client";
 
-import * as React from "react";
-import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
+import { useMemo } from "react";
+import AppSidebar from "@/components/AppSidebar";
+
+type Plan = "FREE" | "STARTER" | "PRO" | "DAYPASS" | "DEV";
 
 export default function AccountPage() {
   const { data: session } = useSession();
-  const [email, setEmail] = React.useState(session?.user?.email ?? "");
+  const PLAN: Plan = useMemo(() => {
+    const raw = (session as any)?.plan as Plan | undefined;
+    return (raw === "FREE" || raw === "STARTER" || raw === "PRO" || raw === "DAYPASS" || raw === "DEV") ? raw : "FREE";
+  }, [session]);
 
-  // Keep input updated if session arrives late
-  React.useEffect(() => {
-    if (session?.user?.email) setEmail(session.user.email);
-  }, [session?.user?.email]);
+  const planDisplay =
+    PLAN === "FREE" ? "Free Plan"
+      : PLAN === "STARTER" ? "Starter Plan"
+      : PLAN === "PRO" ? "Pro Plan"
+      : PLAN === "DAYPASS" ? "Day Pass"
+      : "Dev";
+
+  // you can wire this later
+  const email = session?.user?.email ?? "";
 
   return (
-    <main className="flex-1 overflow-auto p-4">
-      <div className="py-4 px-4 sm:py-6 sm:px-6 md:py-8 md:px-8 lg:py-10 lg:px-10 mb-4 sm:mb-6 md:mb-8 lg:mb-10">
-        <h1 className="text-4xl font-bold text-black text-center lg:text-left sm:text-5xl sm:tracking-tight lg:text-5xl">
-          Settings
-        </h1>
+    <main className="min-h-screen text-white">
+      {/* same background as dashboard */}
+      <div className="fixed inset-0 -z-10 bg-gradient-to-b from-[#e38db7] to-[#b35c8f]" />
 
-        <div>
-          <div className="grid gap-6 md:grid-cols-2 mt-6">
-            {/* Email Settings Card */}
-            <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
-              <div className="flex flex-col space-y-1.5 p-6">
-                <h3 className="tracking-tight text-xl font-semibold flex items-center">
-                  {/* mail icon */}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="lucide lucide-mail mr-2 h-5 w-5"
-                  >
-                    <rect width="20" height="16" x="2" y="4" rx="2"></rect>
-                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
-                  </svg>
-                  Email Settings
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Update your email address
-                </p>
-              </div>
-              <div className="p-6 pt-0">
-                <div className="space-y-2">
-                  <label
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    htmlFor="email"
-                  >
-                    Current Email
-                  </label>
-                  <div className="flex space-x-2">
+      <section className="relative mx-auto w-full px-6 md:px-8 pt-10 pb-20 lg:pl-[255px]">
+        <AppSidebar userName={session?.user?.name} plan={PLAN} active="account" />
+
+        {/* vertical divider */}
+        <div className="hidden lg:block fixed left-[239px] top-0 bottom-0 w-px bg-white/40" />
+
+        {/* Content */}
+        <div className="px-6 lg:pl-8 lg:pr-4">
+          <h1 className="text-left text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 lg:mb-6 drop-shadow">
+            Settings
+          </h1>
+
+          <div className="relative rounded-3xl border border-white/20 bg-white/80 backdrop-blur-sm shadow-lg p-6">
+            {/* Grid */}
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Email Settings */}
+              <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+                <div className="flex flex-col space-y-1.5 p-6">
+                  <h3 className="tracking-tight text-xl font-semibold flex items-center text-black">
+                    {/* mail icon */}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                         viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                         className="mr-2 h-5 w-5">
+                      <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                    </svg>
+                    Email Settings
+                  </h3>
+                  <p className="text-sm text-black/70">Update your email address</p>
+                </div>
+                <div className="p-6 pt-0">
+                  <label className="block text-sm font-medium text-black/80 mb-2">Current Email</label>
+                  <div className="flex gap-2">
                     <input
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 flex-grow"
+                      className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
                       id="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      readOnly
                     />
-                    <button
-                      className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-                      onClick={() => {
-                        // Placeholder: wire to your email-change flow or support.
-                        // You could POST to /api/account/change-email here.
-                        console.log("Change Email clicked:", email);
-                        alert("Email change is not yet available.");
-                      }}
-                    >
+                    <button className="inline-flex items-center justify-center rounded-md bg-black text-white h-10 px-4 py-2 text-sm font-medium">
                       Change Email
                     </button>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Subscription Card */}
-            <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
-              <div className="flex flex-col space-y-1.5 p-6">
-                <h3 className="tracking-tight text-xl font-semibold flex items-center">
-                  {/* credit card icon */}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="lucide lucide-credit-card mr-2 h-5 w-5"
-                  >
-                    <rect width="20" height="14" x="2" y="5" rx="2"></rect>
-                    <line x1="2" x2="22" y1="10" y2="10"></line>
-                  </svg>
-                  Subscription
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Manage your subscription details
-                </p>
-              </div>
-              <div className="p-6 pt-0 space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  You are not currently subscribed.
-                </p>
-                <Link
-                  href="/upgrade"
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full"
-                >
-                  Subscribe Now
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          {/* Help Card */}
-          <div className="rounded-lg border bg-card text-card-foreground shadow-sm mt-6">
-            <div className="p-6 pt-6">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                <div className="mb-4 sm:mb-0">
-                  <h3 className="text-lg font-semibold">Need Help?</h3>
-                  <p className="text-sm text-muted-foreground">
-                    If you have any questions or need assistance, please don't
-                    hesitate to contact us.
+              {/* Subscription */}
+              <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+                <div className="flex flex-col space-y-1.5 p-6">
+                  <h3 className="tracking-tight text-xl font-semibold flex items-center text-black">
+                    {/* card icon */}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                         viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                         className="mr-2 h-5 w-5">
+                      <rect width="20" height="14" x="2" y="5" rx="2"></rect>
+                      <line x1="2" x2="22" y1="10" y2="10"></line>
+                    </svg>
+                    Subscription
+                  </h3>
+                  <p className="text-sm text-black/70">Manage your subscription details</p>
+                </div>
+                <div className="p-6 pt-0 space-y-4">
+                  <p className="text-sm text-black/70">
+                    You are not currently subscribed.
                   </p>
-                </div>
-                <div className="flex items-center">
-                  {/* mail icon */}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="lucide lucide-mail h-5 w-5 mr-2 text-muted-foreground"
-                  >
-                    <rect width="20" height="16" x="2" y="4" rx="2"></rect>
-                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
-                  </svg>
-                  <a
-                    href="mailto:team@lumrid.com"
-                    className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 underline-offset-4 hover:underline p-0 h-auto font-normal text-primary"
-                  >
-                    team@lumrid.com
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Logout Card */}
-          <div className="rounded-lg border bg-card text-card-foreground shadow-sm mt-6">
-            <div className="p-6 pt-6">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                <div className="mb-4 sm:mb-0">
-                  <h3 className="text-lg font-semibold">Logout</h3>
-                </div>
-                <div className="flex items-center">
-                  <button
-                    onClick={() => signOut({ callbackUrl: "/" })}
-                    className="inline-flex items-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-destructive text-destructive-foreground hover:bg-destructive/90 h-10 px-4 py-2 w-full justify-start focus:ring-0"
-                  >
-                    <div className="flex items-center w-full">
-                      {/* log-out icon */}
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="lucide lucide-log-out h-4 w-4"
-                      >
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                        <polyline points="16 17 21 12 16 7"></polyline>
-                        <line x1="21" x2="9" y1="12" y2="12"></line>
-                      </svg>
-                      <span className="ml-3">Logout</span>
-                    </div>
+                  <button className="inline-flex items-center justify-center rounded-md bg-black text-white h-10 px-4 py-2 w-full text-sm font-medium">
+                    Subscribe Now
                   </button>
                 </div>
               </div>
             </div>
+
+            {/* Help */}
+            <div className="rounded-lg border bg-card text-card-foreground shadow-sm mt-6">
+              <div className="p-6 pt-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                  <div className="mb-4 sm:mb-0">
+                    <h3 className="text-lg font-semibold text-black">Need Help?</h3>
+                    <p className="text-sm text-black/70">
+                      If you have any questions or need assistance, please don't hesitate to contact us.
+                    </p>
+                  </div>
+                  <div className="flex items-center text-black">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                         viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                         className="h-5 w-5 mr-2 text-black/60">
+                      <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                    </svg>
+                    <a className="underline" href="mailto:team@lumrid.com">team@lumrid.com</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Logout */}
+            <div className="rounded-lg border bg-card text-card-foreground shadow-sm mt-6">
+              <div className="p-6 pt-6 flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-black">Logout</h3>
+                <button
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="inline-flex items-center rounded-md bg-red-600 text-white h-10 px-4 py-2 text-sm font-medium hover:bg-red-700"
+                >
+                  {/* logout icon */}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                       viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                       className="h-4 w-4">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" x2="9" y1="12" y2="12"></line>
+                  </svg>
+                  <span className="ml-2">Logout</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      </div> 
+      </section>
     </main>
   );
 }
