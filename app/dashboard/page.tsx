@@ -1194,7 +1194,7 @@ export default function DashboardPage() {
                       type="button"
                       disabled={appending || !text.trim()}
                       onClick={() => appendOnce(text.trim().split(/\s+/).slice(0, 12).join(" "))}
-                      className="ml-2 inline-flex items-center rounded-full bg-white text-black px-3 py-1.5 text-xs font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
+                      className="cursor-pointer ml-2 inline-flex items-center rounded-full bg-white text-black px-3 py-1.5 text-xs font-semibold border border-black/10 hover:bg-black/5 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
                       title="Send a tiny test chunk"
                     >
                       {appending ? "Testing…" : "Test Connection"}
