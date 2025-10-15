@@ -26,25 +26,32 @@ export async function GET(req: Request) {
 
     if (!s) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    const payload = {
-      id: s.id,
-      status: s.status,
-      doneWords: s.doneWords,
-      totalWords: s.totalWords,
-      nextAt: s.nextAt ?? null,
-      endsAt: s.endsAt ?? null,
-      lastError: s.lastError ?? null,
-    };
+    // Compute server-side countdowns to avoid client clock drift.
+    const serverNow = Date.now();
+    const nextInMs = s.nextAt ? Math.max(0, new Date(s.nextAt).getTime() - serverNow) : null;
+    const endsInMs = s.endsAt ? Math.max(0, new Date(s.endsAt).getTime() - serverNow) : null;
 
-    return NextResponse.json(payload, {
-      headers: {
-        "Cache-Control": "no-store, no-cache, must-revalidate",
-      },
-    });
-  } catch (err: any) {
     return NextResponse.json(
-      { error: err?.message ?? "Failed to fetch status" },
-      { status: 500 }
+      {
+        id: s.id,
+        status: s.status,           // "RUNNING" | "PAUSED" | "DONE" | "CANCELED"
+        doneWords: s.doneWords,
+        totalWords: s.totalWords,
+        nextAt: s.nextAt ?? null,
+        endsAt: s.endsAt ?? null,
+        nextInMs,                   // ms until next chunk (null if none scheduled)
+        endsInMs,                   // ms until end (null if unknown/not set)
+        lastError: s.lastError ?? null,
+        serverNow,                  // epoch ms used by client for drift correction
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      }
     );
+  } catch (err: unknown) {
+    const message = (err as Error)?.message ?? "Failed to fetch status";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

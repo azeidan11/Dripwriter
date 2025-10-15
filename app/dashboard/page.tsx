@@ -254,6 +254,13 @@ export default function DashboardPage() {
     napRef.current = Date.now() + dur;
   }
   const [timeLeftMs, setTimeLeftMs] = useState<number>(0);
+  // ---- Server-driven countdown (from /api/drip/status) ----
+  const [uiNextMs, setUiNextMs] = useState<number>(0);
+  const [uiEtaMs, setUiEtaMs] = useState<number>(0);
+  const nextMsRef = useRef<number>(0);
+  const etaMsRef = useRef<number>(0);
+  const uiNextRef = useRef<number>(0);
+  const uiEtaRef = useRef<number>(0);
   // --- Server drip start ---
   async function startServerDrip() {
     if (!signedIn) { setConnectError("Sign in first"); return; }
@@ -505,6 +512,17 @@ export default function DashboardPage() {
   }
 
   useEffect(() => () => stopTimer(), []);
+  // Helper to format ms for display (e.g. 1h 2m, 2m 5s, 13s)
+  function fmtMs(ms: number) {
+    const s = Math.max(0, Math.floor(ms / 1000));
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const ss = s % 60;
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m ${ss}s`;
+    return `${ss}s`;
+  }
+
   useEffect(() => {
     if (signedIn && PLAN === "FREE") {
       refreshUsage();
@@ -521,30 +539,77 @@ export default function DashboardPage() {
     }, 1000);
     return () => clearInterval(id);
   }, [dripStatus]);
+
+  // Server countdown ticker (driven by refs populated from /api/drip/status)
+  useEffect(() => {
+    if (!srvSessionId || dripStatus !== "running") return;
+    const id = setInterval(() => {
+      const newNext = Math.max(0, nextMsRef.current - 1000);
+      const newEta = Math.max(0, etaMsRef.current - 1000);
+      nextMsRef.current = newNext;
+      etaMsRef.current = newEta;
+
+      if (uiNextRef.current !== newNext) {
+        setUiNextMs(newNext);
+        uiNextRef.current = newNext;
+      }
+      if (uiEtaRef.current !== newEta) {
+        setUiEtaMs(newEta);
+        uiEtaRef.current = newEta;
+      }
+
+      if (newNext === 0 && newEta === 0) {
+        clearInterval(id);
+      }
+    }, 1000);
+    return () => clearInterval(id);
+  }, [srvSessionId, dripStatus]);
+
   // --- Server drip polling ---
   useEffect(() => {
     if (!srvSessionId) return;
     let cancelled = false;
     async function poll() {
       try {
-        const sid = srvSessionId as string; // narrowed by the early return above
-        const r = await fetch(`/api/drip/status?sessionId=${encodeURIComponent(sid)}`);
+        const sid = srvSessionId as string;
+        const r = await fetch(`/api/drip/status?sessionId=${encodeURIComponent(sid)}`, { cache: "no-store" });
         const s = await r.json();
         if (!r.ok) throw new Error(s.error || "Status error");
         if (cancelled) return;
-        setDripProgress({ done: Number(s.doneWords || 0), total: Number(s.totalWords || 0) });
+
+        setDripProgress({
+          done: Number(s.doneWords || 0),
+          total: Number(s.totalWords || 0),
+        });
+
+        // Initialize/refresh server-driven countdowns if provided
+        if (typeof s.nextInMs === "number") {
+          nextMsRef.current = Math.max(0, Number(s.nextInMs));
+          if (uiNextRef.current !== nextMsRef.current) {
+            setUiNextMs(nextMsRef.current);
+            uiNextRef.current = nextMsRef.current;
+          }
+        }
+        if (typeof s.endsInMs === "number") {
+          etaMsRef.current = Math.max(0, Number(s.endsInMs));
+          if (uiEtaRef.current !== etaMsRef.current) {
+            setUiEtaMs(etaMsRef.current);
+            uiEtaRef.current = etaMsRef.current;
+          }
+        }
+
         if (s.status === "DONE") {
           setDripStatus("done");
           setSrvSessionId(null);
-          return; // stop
+          return;
         }
         if (s.status === "ERROR") {
           setConnectError(s.lastError || "Background drip error");
           setDripStatus("paused");
           setSrvSessionId(null);
-          return; // stop
+          return;
         }
-      } catch (e: any) {
+      } catch (_e) {
         // swallow transient errors; UI remains running and retries
       }
     }
@@ -1246,7 +1311,7 @@ export default function DashboardPage() {
                     </span>
                   )}
                   {dripStatus === "running" && srvSessionId && (
-                    <span>• Updating…</span>
+                    <span>• ETA {fmtMs(uiEtaMs)} - next chunk in {fmtMs(uiNextMs)}</span>
                   )}
                   {dripStatus === "running" && !srvSessionId && (
                     <span>• ETA: {Math.max(0, Math.ceil(timeLeftMs / 1000))}s left</span>
