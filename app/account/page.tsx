@@ -127,7 +127,7 @@ export default function AccountPage() {
             <div className="p-6 pt-6 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-black">Logout</h3>
               <button
-                onClick={() => signOut({ callbackUrl: "/" })}
+                onClick={() => signOut({ callbackUrl: "/login" })}
                 className="inline-flex items-center rounded-md bg-red-600 text-white h-10 px-4 py-2 text-sm font-medium hover:bg-red-700 cursor-pointer"
               >
                 {/* logout icon */}

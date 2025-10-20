@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
   const [mounted, setMounted] = useState(false);
@@ -11,9 +12,12 @@ export default function LoginPage() {
     return () => cancelAnimationFrame(t);
   }, []);
 
+  const search = useSearchParams();
+  const nextUrl = search?.get("next") || "/dashboard";
+
   const handleGoogle = async () => {
     try {
-      await signIn("google", { callbackUrl: "/dashboard" });
+      await signIn("google", { callbackUrl: nextUrl });
     } catch (e) {
       console.error("NextAuth Google sign-in failed:", e);
     }
