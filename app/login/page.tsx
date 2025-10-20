@@ -1,13 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
   const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
     const t = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(t);
   }, []);
+
+  const handleGoogle = async () => {
+    try {
+      await signIn("google", { callbackUrl: "/dashboard" });
+    } catch (e) {
+      console.error("NextAuth Google sign-in failed:", e);
+    }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background font-sans">
@@ -29,6 +39,7 @@ export default function LoginPage() {
           <div className="px-10 pb-10 flex justify-center">
             <button
               type="button"
+              onClick={handleGoogle}
               className="w-full h-14 px-6 py-3 inline-flex items-center justify-center rounded-lg text-lg font-semibold bg-primary text-primary-foreground cursor-pointer transition-all duration-300 ease-in-out border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 hover:bg-[#b35c8f] hover:text-white"
             >
               <svg
