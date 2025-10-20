@@ -646,9 +646,7 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <main className="min-h-screen text-white">
-      {/* exact landing background */}
-      <div className="fixed inset-0 -z-10 bg-gradient-to-b from-[#e38db7] to-[#b35c8f]" />
+    <main className="min-h-screen bg-white text-black">
 
       <section className="relative mx-auto w-full px-6 md:px-8 pt-10 pb-20 lg:pl-[255px]">
         {/* TEMP sign in/out buttons for dev */}
@@ -690,7 +688,7 @@ export default function DashboardPage() {
           </h1>
 
           {/* Card copied to match landing styles */}
-          <div className="relative rounded-3xl border border-white/20 bg-white/80 backdrop-blur-sm shadow-lg p-6">
+          <div className="relative rounded-3xl border border-black/10 bg-white shadow-md shadow-black/10 drop-shadow-[-10px_-10px_24px_rgba(0,0,0,0.18)] p-6">
             <h2 className="text-2xl font-bold mb-4 text-black text-left">Select Duration</h2>
             <p className="text-sm text-black/70 -mt-1 mb-3">Choose how long the drip will run:</p>
 
@@ -783,7 +781,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="my-3 h-px w-full bg-black/10" />
+            <div className="my-3 h-px w-full bg-white/20" />
 
             {/* Textarea + counters */}
             <div className="mt-5 relative z-10">
@@ -829,7 +827,7 @@ export default function DashboardPage() {
                       const sug = nextDurationSuggestion(words, PLAN, duration);
                       return (
                         <>
-                          <span className="text-amber-700">That’s a lot of words for {durationLabel(duration)}.</span>{' '}
+                          <span className="text-amber-700">That’s a lot of words for {durationLabel(duration)}.</span>{" "}
                           {sug && sug !== duration ? (
                             <span>We suggest {durationLabel(sug)} for a more realistic drip.</span>
                           ) : null}
@@ -841,12 +839,12 @@ export default function DashboardPage() {
                 </div>
               )}
               {PLAN === "FREE" && (
-                <div className="mt-1 text-xs italic text-black/60">
+                <div className="mt-1 text-xs italic text-black/70">
                   {PRO_CAPS[duration].toLocaleString()}+ words with Pro
                 </div>
               )}
               {PLAN === "STARTER" && (
-                <div className="mt-1 text-xs italic text-black/60">
+                <div className="mt-1 text-xs italic text-black/70">
                   {PRO_CAPS[duration].toLocaleString()}+ words with Pro
                 </div>
               )}
@@ -918,7 +916,7 @@ export default function DashboardPage() {
               </div>
 
               {docUrl && (
-                <div className="text-sm text-black/80 flex items-center gap-3">
+                <div className="text-sm text-black/70 flex items-center gap-3">
                   <span className="inline-flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
                       <path d="M9 12h6"/>
@@ -940,12 +938,12 @@ export default function DashboardPage() {
                   )}
                   {docId && (
                     <span className="inline-flex items-center gap-1">
-                      <span className="text-xs text-black/60">(ID: {docId ?? ""})</span>
+                      <span className="text-xs text-black/70">(ID: {docId ?? ""})</span>
                       {usedDocLocked && dripStatus === 'idle' && (
                         <button
                           type="button"
                           onClick={() => { setUsedDocLocked(false); /* textbox/button remain visible; just unlock */ }}
-                          className="underline text-black/80 hover:text-black cursor-pointer text-xs"
+                          className="underline text-black/70 hover:text-black cursor-pointer text-xs"
                         >
                           Edit Link
                         </button>
@@ -1069,51 +1067,51 @@ export default function DashboardPage() {
 
           {/* How it works */}
           <section id="how" className="mt-10">
-            <div className="rounded-3xl border border-white/20 bg-white/10 backdrop-blur-md shadow-lg p-6 md:p-8">
-              <h2 className="text-left text-3xl md:text-4xl font-extrabold mb-7 text-white drop-shadow">How It Works</h2>
+            <div className="rounded-3xl border border-black/10 bg-white shadow-2xl shadow-black/20 p-6 md:p-8">
+              <h2 className="text-left text-3xl md:text-4xl font-extrabold mb-7 text-black drop-shadow">How It Works</h2>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                 {/* Step 1 */}
-                <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 text-center">
+                <div className="rounded-3xl border border-black/10 bg-white shadow-md p-6 text-center">
                   <div className="mx-auto mb-4 size-14 md:size-16 rounded-2xl grid place-items-center border border-white/20 bg-white/10">
                     {/* Paste icon (updated path) */}
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7 md:h-8 md:w-8 text-white/90">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7 md:h-8 md:w-8 text-black/90">
                       <path d="M9 2a2 2 0 0 0-2 2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6v-2H6V6h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V6h1v4h2V6a2 2 0 0 0-2-2h-1a2 2 0 0 0-2-2H9Zm0 2h6v3H9V4Z"/>
                     </svg>
                   </div>
-                  <div className="text-sm uppercase tracking-wide text-white/70">Step 1</div>
-                  <h3 className="mt-1 text-xl font-bold text-white">Paste your draft</h3>
-                  <p className="mt-2 text-white/80">Drop your text into the box or paste it from anywhere.</p>
+                  <div className="text-sm uppercase tracking-wide text-black/70">Step 1</div>
+                  <h3 className="mt-1 text-xl font-bold text-black">Paste your draft</h3>
+                  <p className="mt-2 text-black/80">Drop your text into the box or paste it from anywhere.</p>
                 </div>
 
                 {/* Step 2 */}
-                <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 text-center">
+                <div className="rounded-3xl border border-black/10 bg-white shadow-md p-6 text-center">
                   <div className="mx-auto mb-4 size-14 md:size-16 rounded-2xl grid place-items-center border border-white/20 bg-white/10">
                     {/* Duration/clock icon (stroke variant) */}
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-7 w-7 md:h-8 md:w-8 text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-7 w-7 md:h-8 md:w-8 text-black">
                       <circle cx="12" cy="12" r="9" />
                       <line x1="12" y1="12" x2="12" y2="7" />
                       <line x1="12" y1="12" x2="15" y2="12" />
                     </svg>
                   </div>
-                  <div className="text-sm uppercase tracking-wide text-white/70">Step 2</div>
-                  <h3 className="mt-1 text-xl font-bold text-white">Pick a total duration</h3>
-                  <p className="mt-2 text-white/80">{`Choose from ${planRangeText} for the drip to take place.`}</p>
+                  <div className="text-sm uppercase tracking-wide text-black/70">Step 2</div>
+                  <h3 className="mt-1 text-xl font-bold text-black">Pick a total duration</h3>
+                  <p className="mt-2 text-black/80">{`Choose from ${planRangeText} for the drip to take place.`}</p>
                 </div>
 
                 {/* Step 3 */}
-                <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm p-6 text-center">
+                <div className="rounded-3xl border border-black/10 bg-white shadow-md p-6 text-center">
                   <div className="mx-auto mb-4 size-14 md:size-16 rounded-2xl grid place-items-center border border-white/20 bg-white/10">
                     {/* Google Doc icon (image) */}
                     <img
                       src="/google-docs.png"
                       alt="Google Docs Icon"
-                      className="h-7 w-7 md:h-8 md:w-8 object-contain"
+                      className="h-7 w-7 md:h-8 md:w-8 object-contain brightness-0"
                     />
                   </div>
-                  <div className="text-sm uppercase tracking-wide text-white/70">Step 3</div>
-                  <h3 className="mt-1 text-xl font-bold text-white">Watch it drip into Docs</h3>
-                  <p className="mt-2 text-white/80">We type it in on a schedule with natural edits and pauses.</p>
+                  <div className="text-sm uppercase tracking-wide text-black/70">Step 3</div>
+                  <h3 className="mt-1 text-xl font-bold text-black">Watch it drip into Docs</h3>
+                  <p className="mt-2 text-black/80">We type it in on a schedule with natural edits and pauses.</p>
                 </div>
               </div>
             </div>
