@@ -24,6 +24,15 @@ export default function AccountPage() {
   // can wire this later
   const email = session?.user?.email ?? "";
 
+  // derive "Member since" date from session, if present (session callback should include createdAt)
+  const memberSince = useMemo(() => {
+    const raw = (session as any)?.user?.createdAt || (session as any)?.createdAt;
+    if (!raw) return null;
+    const d = typeof raw === 'string' || typeof raw === 'number' ? new Date(raw) : (raw as Date);
+    if (isNaN(d.getTime())) return null;
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  }, [session]);
+
   return (
     <main className="min-h-screen text-black">
       {/* white background */}
@@ -47,23 +56,18 @@ export default function AccountPage() {
             <div className="rounded-lg bg-white text-card-foreground border border-gray-200 shadow-lg">
               <div className="flex flex-col space-y-1.5 p-6">
                 <h3 className="tracking-tight text-xl font-semibold flex items-center text-black">
-                  {/* mail icon */}
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                       viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                       className="mr-2 h-5 w-5">
-                    <rect width="20" height="16" x="2" y="4" rx="2"></rect>
-                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                  {/* user/profile icon */}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-5 w-5">
+                    <path d="M20 21a8 8 0 0 0-16 0" />
+                    <circle cx="12" cy="7" r="4" />
                   </svg>
-                  Email 
+                  Account Details
                 </h3>
-                <label className="block text-sm font-medium text-black/80 mt-2 mb-2">Current Email:</label>
-                <input
-                  className="text-black flex h-10 w-full rounded-md bg-white pl-0 py-2 text-sm"
-                  id="email"
-                  value={email}
-                  readOnly
-                />
+                <div className="text-base md:text-lg text-black/80 mt-2 space-y-1.5">
+                  <div><strong>Name:</strong> {session?.user?.name ?? "—"}</div>
+                  <div><strong>Member since:</strong> {memberSince ?? '—'}</div>
+                  <div><strong>Plan:</strong> <span style={{ color: "#b35c8f" }}>{planDisplay}</span></div>
+                </div>
               </div>
             </div>
 

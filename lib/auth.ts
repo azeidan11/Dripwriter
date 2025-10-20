@@ -183,7 +183,7 @@ export const authOptions: NextAuthOptions = {
       session,
       token,
     }: {
-      session: Session & { userId?: string | null; plan?: string | null } & {
+      session: Session & { userId?: string | null; plan?: string | null; createdAt?: string | null } & {
         accessToken?: string;
         refreshToken?: string;
       };
@@ -192,26 +192,38 @@ export const authOptions: NextAuthOptions = {
       try {
         const email = session?.user?.email as string | undefined;
         if (email) {
-          const user = await prisma.user.findUnique({ where: { email } });
+          // Fetch only what we need (also avoids bringing token fields unnecessarily)
+          const user = await prisma.user.findUnique({
+            where: { email },
+            select: { id: true, plan: true, name: true, createdAt: true },
+          });
+
           if (user) {
             (session as any).userId = user.id;
             (session as any).plan = user.plan;
+            (session as any).createdAt = user.createdAt ? user.createdAt.toISOString() : null;
             if (session.user) session.user.name = user.name ?? session.user.name ?? null;
           } else {
+            // Fallback to whatever is in the JWT if DB lookup failed
             (session as any).userId = (token as any)?.userId ?? null;
             (session as any).plan = (token as any)?.plan ?? "FREE";
+            (session as any).createdAt = null;
           }
         } else {
           (session as any).userId = (token as any)?.userId ?? null;
           (session as any).plan = (token as any)?.plan ?? "FREE";
+          (session as any).createdAt = null;
         }
       } catch {
         (session as any).userId = (token as any)?.userId ?? null;
         (session as any).plan = (token as any)?.plan ?? "FREE";
+        (session as any).createdAt = null;
       }
 
-      (session as any).accessToken = token.accessToken;
-      (session as any).refreshToken = token.refreshToken;
+      // Surface short-lived Google tokens to the client (optional use)
+      (session as any).accessToken = (token as any).accessToken;
+      (session as any).refreshToken = (token as any).refreshToken;
+
       return session;
     },
   },
