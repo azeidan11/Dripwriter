@@ -2,7 +2,7 @@
 
 // app/dashboard/page.tsx
 import { useState, useEffect, useMemo, useRef, useTransition } from "react";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import { tokenizeKeepWhitespace, computeNextChunk } from "@/lib/dripFormula";
 import AppSidebar from "@/components/AppSidebar";
 
@@ -649,24 +649,6 @@ export default function DashboardPage() {
     <main className="min-h-screen bg-white text-black">
 
       <section className="relative mx-auto w-full px-6 md:px-8 pt-10 pb-20 lg:pl-[255px]">
-        {/* TEMP sign in/out buttons for dev */}
-        <div className="mb-4">
-          {!signedIn ? (
-            <button
-              onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-              className="cursor-pointer rounded-full bg-black text-white px-4 py-2 text-sm font-semibold hover:bg-black/90"
-            >
-              Sign in (temp)
-            </button>
-          ) : (
-            <button
-              onClick={() => signOut({ callbackUrl: "/" })}
-              className="cursor-pointer rounded-full bg-white text-black px-4 py-2 text-sm font-semibold border border-black/10 hover:bg-black/5"
-            >
-              Sign out (temp)
-            </button>
-          )}
-        </div>
         {/* Fixed left dashboard rail */}
         <AppSidebar
           userName={(session as any)?.user?.name ?? null}
