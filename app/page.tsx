@@ -1,9 +1,11 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useSession, signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [duration, setDuration] = useState<30 | 60>(30); // minutes
+  const router = useRouter();
   const [text, setText] = useState("");
   const [demoInView, setDemoInView] = useState(false);
   const demoRef = useRef<HTMLDivElement | null>(null);
@@ -245,7 +247,7 @@ export default function Home() {
           <a className="hover:text-white text-base" href="#faq">FAQ</a>
           <button
             type="button"
-            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+            onClick={() => router.push("/login")}
             className="cursor-pointer rounded-full bg-white text-black px-4 py-2 font-medium hover:bg-white/90 text-base"
           >
             Sign in
@@ -255,7 +257,7 @@ export default function Home() {
         <div className="md:hidden flex items-center gap-2">
           <button
             type="button"
-            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+            onClick={() => router.push("/login")}
             className="cursor-pointer rounded-full bg-white text-black px-4 py-2 font-medium hover:bg-white/90"
           >
             Sign in
@@ -319,7 +321,7 @@ export default function Home() {
           <div className="mt-10 flex items-center justify-center gap-5">
             <button
               type="button"
-              onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+              onClick={() => router.push("/login")}
               className="cursor-pointer rounded-full bg-white px-6 py-4 text-base font-semibold text-black shadow-lg shadow-black/20 hover:bg-white/90"
             >
               Get started free
@@ -652,7 +654,7 @@ export default function Home() {
                   <h3 className="text-black text-lg font-semibold">Sign in to continue</h3>
                   <p className="text-black/70 text-sm mt-1">You’ll be taken to the dashboard after sign‑in.</p>
                   <button
-                    onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+                    onClick={() => router.push("/login")}
                     className="cursor-pointer mt-4 rounded-full bg-black text-white px-5 py-2 text-sm font-semibold hover:bg-black/90"
                   >
                     Sign in with Google
