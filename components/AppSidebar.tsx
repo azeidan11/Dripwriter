@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import React from "react";
+import { useSession } from "next-auth/react";
+import { useRouter, usePathname } from "next/navigation";
 
 type Plan = "FREE" | "STARTER" | "PRO" | "DAYPASS" | "DEV";
 type Active =
@@ -40,6 +42,21 @@ export default function AppSidebar({
   /** Custom CTA text for the bottom Upgrade button. */
   upgradeCta?: string;
 }) {
+  const { status } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  React.useEffect(() => {
+    if (status === "unauthenticated") {
+      const next = pathname && pathname !== "/" ? pathname : "/dashboard";
+      router.replace(`/login?next=${encodeURIComponent(next)}`);
+    }
+  }, [status, router, pathname]);
+
+  if (status === "loading") {
+    return null;
+  }
+
   const planDisplay = planLabel(plan);
   const cta = upgradeCta
     ?? (plan === "FREE" ? "Upgrade Now" : plan === "STARTER" ? "Upgrade to Pro" : "Browse Plans");
