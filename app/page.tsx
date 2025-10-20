@@ -229,7 +229,7 @@ export default function Home() {
   return (
     <main className="min-h-screen text-white">
       {/* Background image + dark overlay for readability */}
-      <div className="fixed inset-0 -z-10 bg-gradient-to-b from-[#e38db7] to-[#b35c8f]" />
+      <div className="fixed inset-0 -z-10 bg-[#b35c8f]" />
 
       {/* Top nav (simple placeholder) */}
       <header className="mx-auto w-full px-6 md:px-8 py-5 flex items-center justify-between">
