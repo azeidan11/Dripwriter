@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "worker:drip": "tsx --env-file=.env.local worker/drip-worker.ts"
+    "worker:drip": "tsx --env-file=.env.local worker/drip-worker.ts",
+    "worker": "npm run worker:drip"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",

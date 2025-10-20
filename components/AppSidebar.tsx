@@ -47,7 +47,7 @@ export default function AppSidebar({
   return (
     <>
       {/* Fixed left dashboard rail */}
-      <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-[239px] select-none bg-gradient-to-b from-[#b35c8f] to-[#b35c8f]">
+      <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-[239px] select-none bg-[#b35c8f]">
         <nav className="flex-1 px-4 py-6 flex flex-col">
           <div>
             <div className="text-white font-extrabold drop-shadow mb-4 text-2xl md:text-3xl">
