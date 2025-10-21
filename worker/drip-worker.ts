@@ -111,12 +111,25 @@ const worker = new Worker(
       return;
     }
 
-    // Safety: if “scheduled” tick came too early (nextAt in future), re-schedule
-    if (session.nextAt && session.nextAt.getTime() > Date.now() + 5_000) {
-      const delayMs = Math.max(0, session.nextAt.getTime() - Date.now());
-      console.log("[worker] session scheduled in future, delaying", delayMs, "ms");
-      await enqueueDrip({ sessionId }, { delay: delayMs, jobId: `${sessionId}-next` });
-      return;
+    // Safety: handle scheduling tolerance so UI countdown ≈ worker execution
+    if (session.nextAt) {
+      const now = Date.now();
+      const target = session.nextAt.getTime();
+      const diff = target - now; // ms until target; negative means we're late
+
+      // If we're more than 1s early, re-schedule for the remaining diff
+      if (diff > 1_000) {
+        const delayMs = Math.max(0, diff);
+        console.log("[worker] nextAt in future; re-scheduling", { sessionId, diff, delayMs, target, now });
+        const uniqId = `${sessionId}-next-${target}`;
+        await enqueueDrip({ sessionId }, { delay: delayMs, jobId: uniqId });
+        return;
+      }
+
+      // If we're within ±1s window, proceed immediately (avoid zero-countdown stall)
+      if (diff > -1_000) {
+        console.log("[worker] within tolerance window; proceeding now", { sessionId, diff, target, now });
+      }
     }
 
     // Done already?
@@ -167,7 +180,7 @@ const worker = new Worker(
       if (nextAt) {
         const delayMs = Math.max(0, nextAt.getTime() - Date.now());
         console.log(`[worker] requeueing next job for ${session.id} in ${delayMs} ms`);
-        await enqueueDrip({ sessionId }, { delay: delayMs, jobId: `${sessionId}-next` });
+        await enqueueDrip({ sessionId }, { delay: delayMs, jobId: `${sessionId}-next-${newDone}` });
       }
     } catch (e: any) {
       console.error("[worker] error while appending", e);
@@ -190,7 +203,7 @@ const worker = new Worker(
         if (s2?.nextAt) {
           const delayMs = Math.max(0, s2.nextAt.getTime() - Date.now());
           console.log("[worker] scheduling retry for", session.id, "in", delayMs, "ms");
-          await enqueueDrip({ sessionId }, { delay: delayMs, jobId: `${sessionId}-next` });
+          await enqueueDrip({ sessionId }, { delay: delayMs, jobId: `${sessionId}-retry-${s2.nextAt.getTime()}` });
         }
       }
 
