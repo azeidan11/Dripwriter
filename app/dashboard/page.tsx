@@ -646,7 +646,8 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-white text-black">
+    <main className="min-h-screen bg-white text-black overscroll-none">
+      <div className="fixed inset-0 -z-10 bg-white" />
 
       <section className="relative mx-auto w-full px-6 md:px-8 pt-10 pb-20 lg:pl-[255px]">
         {/* Fixed left dashboard rail */}

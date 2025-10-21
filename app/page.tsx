@@ -430,17 +430,17 @@ export default function Home() {
           <div className="mx-auto w-full max-w-7xl">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
               {/* Problem (left) */}
-              <div className={`rounded-3xl p-6 md:p-8 border border-white/15 bg-white/10 backdrop-blur-md transform-gpu transition-all duration-250 md:duration-300 ease-out ${whyLeftIn ? 'opacity-100 translate-y-0 translate-x-0' : 'opacity-0 translate-y-2 -translate-x-3'}`}>
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-3 py-1 text-xs uppercase tracking-wide text-white/80">
+              <div className={`rounded-3xl p-6 md:p-8 border border-white/20 bg-white/70 backdrop-blur-sm shadow-lg transform-gpu transition-all duration-250 md:duration-300 ease-out ${whyLeftIn ? 'opacity-100 translate-y-0 translate-x-0' : 'opacity-0 translate-y-2 -translate-x-3'}`}>
+                <div className="inline-flex items-center gap-2 rounded-full bg-red-500/15 border border-white/20 px-3 py-1 text-xs uppercase tracking-wide text-black/80">
                   Problem
                 </div>
-                <h3 className="mt-3 text-2xl md:text-3xl font-extrabold">Why copy–paste isn’t cutting it</h3>
+                <h3 className="mt-3 text-2xl md:text-3xl font-extrabold text-black">Why copy–paste isn’t cutting it</h3>
                 <div className="mt-4 relative">
                   <div
                     className={`overflow-hidden transition-[max-height] duration-500 ease-out ${whyLeftExpanded ? '' : 'pb-2'}`}
                     style={{ maxHeight: whyLeftExpanded ? '2000px' : '280px' }}
                   >
-                    <ul className="space-y-3 text-white/85 md:text-lg">
+                    <ul className="space-y-3 text-black/85 md:text-lg">
                       <li className="flex items-start gap-3 min-h-[56px] md:min-h-[64px]">
                         <span className="mt-1">•</span>
                         <span>Dumping AI text into Docs looks like a single burst — not how people actually type.</span>
@@ -475,7 +475,7 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => toggleWhyBoth(true)}
-                      className="mt-0 text-sm text-white/85 underline cursor-pointer transition-transform duration-150 ease-out hover:scale-[1.05] hover:font-bold"
+                      className="mt-0 text-sm text-black/85 underline cursor-pointer transition-transform duration-150 ease-out hover:scale-[1.05] hover:font-bold"
                     >
                       Read more
                     </button>
@@ -483,7 +483,7 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => toggleWhyBoth(false)}
-                      className="mt-0 text-sm text-white/85 underline cursor-pointer transition-transform duration-150 ease-out hover:scale-[1.05] hover:font-bold"
+                      className="mt-0 text-sm text-black/85 underline cursor-pointer transition-transform duration-150 ease-out hover:scale-[1.05] hover:font-bold"
                     >
                       Collapse
                     </button>
@@ -492,17 +492,17 @@ export default function Home() {
               </div>
 
               {/* Outcome (right) */}
-              <div className={`rounded-3xl p-6 md:p-8 border border-white/15 bg-white/10 backdrop-blur-md transform-gpu transition-all duration-250 md:duration-300 ease-out ${whyRightIn ? 'opacity-100 translate-y-0 translate-x-0' : 'opacity-0 translate-y-2 translate-x-3'}`}>
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-3 py-1 text-xs uppercase tracking-wide text-white/80">
+              <div className={`rounded-3xl p-6 md:p-8 border border-white/20 bg-white/70 backdrop-blur-sm shadow-lg transform-gpu transition-all duration-250 md:duration-300 ease-out ${whyRightIn ? 'opacity-100 translate-y-0 translate-x-0' : 'opacity-0 translate-y-2 translate-x-3'}`}>
+                <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/15 border border-white/20 px-3 py-1 text-xs uppercase tracking-wide text-black/80">
                   Outcome
                 </div>
-                <h3 className="mt-3 text-2xl md:text-3xl font-extrabold">What Dripwriter gives you</h3>
+                <h3 className="mt-3 text-2xl md:text-3xl font-extrabold text-black">What Dripwriter gives you</h3>
                 <div className="mt-4 relative">
                   <div
                     className={`overflow-hidden transition-[max-height] duration-500 ease-out ${whyRightExpanded ? '' : 'pb-2'}`}
                     style={{ maxHeight: whyRightExpanded ? '2000px' : '280px' }}
                   >
-                    <ul className="space-y-3 text-white/85 md:text-lg">
+                    <ul className="space-y-3 text-black/85 md:text-lg">
                       <li className="flex items-start gap-3 min-h-[56px] md:min-h-[64px]">
                         <span className="mt-1">•</span>
                         <span>Natural, human-paced edits that unfold over time — paragraphs, not dumps.</span>
@@ -537,7 +537,7 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => toggleWhyBoth(true)}
-                      className="mt-0 text-sm text-white/85 underline cursor-pointer transition-transform duration-150 ease-out hover:scale-[1.05] hover:font-bold"
+                      className="mt-0 text-sm text-black/85 underline cursor-pointer transition-transform duration-150 ease-out hover:scale-[1.05] hover:font-bold"
                     >
                       Read more
                     </button>
@@ -545,7 +545,7 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => toggleWhyBoth(false)}
-                      className="mt-0 text-sm text-white/85 underline cursor-pointer transition-transform duration-150 ease-out hover:scale-[1.05] hover:font-bold"
+                      className="mt-0 text-sm text-black/85 underline cursor-pointer transition-transform duration-150 ease-out hover:scale-[1.05] hover:font-bold"
                     >
                       Collapse
                     </button>
