@@ -31,7 +31,7 @@ export default function AppSidebar({
   userName,
   plan,
   active = null,
-  comingSoon = plan !== "DEV", // same behavior you had in dashboard
+  comingSoon, // derive below from resolvedPlan when not explicitly provided
   upgradeCta,
 }: {
   userName?: string | null;
@@ -179,6 +179,9 @@ export default function AppSidebar({
   const cta = upgradeCta
     ?? (resolvedPlan === "FREE" ? "Upgrade Now" : resolvedPlan === "STARTER" ? "Upgrade to Pro" : "Browse Plans");
 
+  const comingSoonResolved =
+    typeof comingSoon === "boolean" ? comingSoon : resolvedPlan !== "DEV";
+
   return (
     <>
       {/* Fixed left dashboard rail */}
@@ -236,7 +239,7 @@ export default function AppSidebar({
 
               {/* Upload File (disabled until ready) */}
               <li>
-                {comingSoon ? (
+                {comingSoonResolved ? (
                   <div
                     className="relative cursor-not-allowed opacity-60 select-none"
                     aria-disabled="true"
@@ -298,7 +301,7 @@ export default function AppSidebar({
 
               {/* Text Scan (disabled until ready) */}
               <li>
-                {comingSoon ? (
+                {comingSoonResolved ? (
                   <div
                     className="relative cursor-not-allowed opacity-60 select-none"
                     aria-disabled="true"
@@ -364,7 +367,7 @@ export default function AppSidebar({
 
               {/* Recent Drips (disabled until ready) */}
               <li>
-                {comingSoon ? (
+                {comingSoonResolved ? (
                   <div
                     className="relative cursor-not-allowed opacity-60 select-none"
                     aria-disabled="true"
@@ -457,7 +460,7 @@ export default function AppSidebar({
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="ml-auto h-4 w-4 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100"
+                    className={`ml-auto h-4 w-4 transition-opacity duration-300 ease-out ${currentActive === "upgrade" ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
                   >
                     <path d="m9 18 6-6-6-6" />
                   </svg>
@@ -507,7 +510,7 @@ export default function AppSidebar({
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="ml-auto h-4 w-4 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100"
+                    className={`ml-auto h-4 w-4 transition-opacity duration-300 ease-out ${currentActive === "changelog" ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
                   >
                     <path d="m9 18 6-6-6-6" />
                   </svg>
@@ -542,7 +545,7 @@ export default function AppSidebar({
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="ml-auto h-4 w-4 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100"
+                    className={`ml-auto h-4 w-4 transition-opacity duration-300 ease-out ${currentActive === "feedback" ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
                   >
                     <path d="m9 18 6-6-6-6" />
                   </svg>
