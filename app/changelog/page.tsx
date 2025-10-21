@@ -82,8 +82,9 @@ export default function ChangelogPage() {
 
   return (
     <div className="flex min-h-screen bg-white text-black">
+      <div className="fixed inset-0 -z-10 bg-white" />
       <AppSidebar />
-      <main className="flex-1 overflow-auto p-4">
+      <main className="flex-1 overflow-auto p-4 overscroll-none bg-white">
         <div className="container mx-auto px-4 py-16 max-w-3xl">
           {/* Keep original title sizing */}
           <h2 className="text-4xl font-bold mb-8">Changelog</h2>
