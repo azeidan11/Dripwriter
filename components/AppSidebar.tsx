@@ -42,9 +42,33 @@ export default function AppSidebar({
   /** Custom CTA text for the bottom Upgrade button. */
   upgradeCta?: string;
 }) {
-  const { status } = useSession();
+  const { status, data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
+
+  const [fetchedPlan, setFetchedPlan] = React.useState<Plan | undefined>(undefined);
+
+  // Normalize arbitrary strings (e.g. "pro_monthly") into our Plan union
+  const normalizePlanFromString = (val: string | undefined | null): Plan | undefined => {
+    if (!val) return undefined;
+    const r = val.toLowerCase().trim();
+    if (r.includes("pro")) return "PRO";
+    if (r.includes("starter") || r.includes("basic")) return "STARTER";
+    if (r.includes("daypass") || r.includes("day-pass") || r === "day") return "DAYPASS";
+    if (r.includes("dev")) return "DEV";
+    if (r.includes("free")) return "FREE";
+    return undefined;
+  };
+
+  // Instant: set plan from session immediately (no network) if not provided via props
+  React.useEffect(() => {
+    if (status !== "authenticated") return;
+    if (plan) return; // explicit prop wins
+    const normalized = normalizePlanFromString((session as any)?.plan);
+    if (normalized && normalized !== fetchedPlan) {
+      setFetchedPlan(normalized);
+    }
+  }, [status, plan, session, fetchedPlan]);
 
   React.useEffect(() => {
     if (status === "unauthenticated") {
@@ -53,13 +77,107 @@ export default function AppSidebar({
     }
   }, [status, router, pathname]);
 
+  React.useEffect(() => {
+    if (status !== "authenticated") return;
+    if (plan) return; // prefer explicit prop if provided
+    let isMounted = true;
+    const ctrl = new AbortController();
+
+    async function loadPlan() {
+      try {
+        // Primary: hit your account endpoint with cookies, no cache
+        const res = await fetch("/api/account", {
+          credentials: "include",
+          cache: "no-store",
+          headers: { accept: "application/json" },
+          signal: ctrl.signal,
+        });
+
+        let data: any = null;
+        if (res.ok) {
+          data = await res.json();
+        }
+
+        // Fallback: try NextAuth session endpoint if account didn't return usable data
+        if (!data) {
+          const sessRes = await fetch("/api/auth/session", {
+            credentials: "include",
+            cache: "no-store",
+            headers: { accept: "application/json" },
+            signal: ctrl.signal,
+          });
+          if (sessRes.ok) {
+            data = await sessRes.json();
+          }
+        }
+
+        if (!data) return;
+
+        // Probe common locations for plan/tier
+        const rawVal =
+          data?.plan ??
+          data?.subscription?.plan ??
+          data?.subscription?.tier ??
+          data?.subscriptionTier ??
+          data?.tier ??
+          data?.currentPlan ??
+          data?.product ??
+          data?.price?.product ??
+          data?.stripePlan ??
+          data?.stripe?.plan ??
+          data?.stripe?.price?.product ??
+          data?.user?.plan ??
+          null;
+
+        let normalized: Plan | undefined = undefined;
+        if (rawVal != null) {
+          const r = String(rawVal).toLowerCase().trim();
+          if (r.includes("pro")) normalized = "PRO";
+          else if (r.includes("starter") || r.includes("basic")) normalized = "STARTER";
+          else if (r.includes("daypass") || r.includes("day-pass") || r === "day") normalized = "DAYPASS";
+          else if (r.includes("dev")) normalized = "DEV";
+          else if (r.includes("free")) normalized = "FREE";
+        }
+
+        if (isMounted && normalized) {
+          setFetchedPlan((prev) => (prev !== normalized ? normalized : prev));
+        }
+      } catch (e) {
+        if ((e as any)?.name !== "AbortError") {
+          console.warn("Failed to fetch account plan for sidebar:", e);
+        }
+      }
+    }
+
+    loadPlan();
+    return () => {
+      isMounted = false;
+      ctrl.abort();
+    };
+  }, [status, plan, pathname]);
+
   if (status === "loading") {
     return null;
   }
 
-  const planDisplay = planLabel(plan);
+  // Prefer props; fall back to session/fetched data
+  const resolvedName = userName ?? session?.user?.name ?? "My Account";
+  const sessionPlan = normalizePlanFromString((session as any)?.plan) as Plan | undefined;
+  const resolvedPlan: Plan | undefined = plan ?? sessionPlan ?? fetchedPlan;
+
+  // Auto-detect active tab from current pathname if not provided
+  const autoActive: Active =
+    pathname?.startsWith("/dashboard") ? "dashboard" :
+    pathname?.startsWith("/account") ? "account" :
+    pathname?.startsWith("/changelog") ? "changelog" :
+    pathname?.startsWith("/feedback") ? "feedback" :
+    pathname?.startsWith("/upgrade") ? "upgrade" : null;
+
+  const currentActive = active ?? autoActive;
+
+  const planDisplay = resolvedPlan ? planLabel(resolvedPlan) : "";
   const cta = upgradeCta
-    ?? (plan === "FREE" ? "Upgrade Now" : plan === "STARTER" ? "Upgrade to Pro" : "Browse Plans");
+    ?? (resolvedPlan === "FREE" ? "Upgrade Now" : resolvedPlan === "STARTER" ? "Upgrade to Pro" : "Browse Plans");
 
   return (
     <>
@@ -79,7 +197,7 @@ export default function AppSidebar({
                 <Link
                   href="/dashboard"
                   className={`group block w-[215px] h-10 rounded-lg px-3 text-base flex items-center gap-2 ${
-                    active === "dashboard" ? "bg-white/15" : "hover:bg-white/10"
+                    currentActive === "dashboard" ? "bg-white/15" : "hover:bg-white/10"
                   }`}
                 >
                   {/* icon */}
@@ -108,7 +226,7 @@ export default function AppSidebar({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     className={`ml-auto h-4 w-4 transition-opacity duration-300 ease-out ${
-                      active === "dashboard" ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                      currentActive === "dashboard" ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                     }`}
                   >
                     <path d="m9 18 6-6-6-6" />
@@ -311,7 +429,7 @@ export default function AppSidebar({
                 <Link
                   href="/upgrade"
                   className={`group block w-[215px] h-10 rounded-lg px-3 text-base flex items-center gap-2 ${
-                    active === "upgrade" ? "bg-white/15" : "hover:bg-white/10"
+                    currentActive === "upgrade" ? "bg-white/15" : "hover:bg-white/10"
                   }`}
                 >
                   {/* Rocket icon */}
@@ -360,7 +478,7 @@ export default function AppSidebar({
                 <Link
                   href="/changelog"
                   className={`group block w-[215px] h-10 rounded-lg px-3 text-base flex items-center gap-2 ${
-                    active === "changelog" ? "bg-white/15" : "hover:bg-white/10"
+                    currentActive === "changelog" ? "bg-white/15" : "hover:bg-white/10"
                   }`}
                 >
                   {/* File/Text icon */}
@@ -399,7 +517,7 @@ export default function AppSidebar({
                 <Link
                   href="/feedback"
                   className={`group block w-[215px] h-10 rounded-lg px-3 text-base flex items-center gap-2 ${
-                    active === "feedback" ? "bg-white/15" : "hover:bg-white/10"
+                    currentActive === "feedback" ? "bg-white/15" : "hover:bg-white/10"
                   }`}
                 >
                   {/* Feedback/Message icon */}
@@ -457,10 +575,10 @@ export default function AppSidebar({
               </svg>
               <span className="leading-tight">
                 <span className="block text-white font-medium -mb-0.5">
-                  {userName || "My Account"}
+                  {resolvedName}
                 </span>
                 <span className="block text-white/70 text-xs mt-0.5">
-                  {planDisplay}
+                  {planDisplay || " "}
                 </span>
               </span>
               <svg
