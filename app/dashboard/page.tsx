@@ -670,7 +670,7 @@ export default function DashboardPage() {
           </h1>
 
           {/* Card copied to match landing styles */}
-          <div className="relative rounded-3xl border border-black/10 bg-white shadow-md shadow-black/10 drop-shadow-[-10px_-10px_24px_rgba(0,0,0,0.18)] p-6">
+          <div className="relative rounded-3xl border border-black/10 bg-white shadow-sm shadow-black/5 drop-shadow-[-8px_-8px_20px_rgba(0,0,0,0.10)] p-6">
             <h2 className="text-2xl font-bold mb-4 text-black text-left">Select Duration</h2>
             <p className="text-sm text-black/70 -mt-1 mb-3">Choose how long the drip will run:</p>
 
